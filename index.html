@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>综合 · 页面导航</title>
+<style>
+  :root{
+    --bg:#f7f8fa;
+    --card:#ffffff;
+    --ink:#0f172a;
+    --muted:#64748b;
+    --line:#e5e9f0;
+    --accent:#2563eb;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+    font-size:15px;
+    line-height:1.6;
+    padding:56px 20px 72px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto}
+
+  header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:16px;
+    padding-bottom:20px;
+    margin-bottom:28px;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 6px;
+  }
+  h1{
+    font-size:28px;
+    line-height:1.2;
+    letter-spacing:-.02em;
+    margin:0;
+  }
+  .sub{
+    font-size:13px;
+    color:var(--muted);
+    margin:8px 0 0;
+  }
+  .count{
+    flex:none;
+    font-size:12px;
+    color:var(--muted);
+    border:1px solid var(--line);
+    background:var(--card);
+    border-radius:999px;
+    padding:5px 12px;
+    white-space:nowrap;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:14px;
+  }
+
+  .card{
+    display:flex;
+    flex-direction:column;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px 18px 16px;
+    transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+  .card:hover{
+    border-color:#cbd5e1;
+    box-shadow:0 6px 20px rgba(15,23,42,.07);
+    transform:translateY(-2px);
+  }
+
+  .no{
+    font-size:11px;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:.08em;
+    color:#94a3b8;
+    margin-bottom:10px;
+  }
+  .card h2{
+    font-size:16px;
+    line-height:1.4;
+    margin:0 0 6px;
+    letter-spacing:-.01em;
+  }
+  .card p{
+    font-size:13px;
+    color:var(--muted);
+    margin:0 0 18px;
+  }
+
+  .btn{
+    margin-top:auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 14px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#fbfcfe;
+    color:var(--ink);
+    text-decoration:none;
+    font-size:13px;
+    font-weight:600;
+    transition:background .18s ease, border-color .18s ease, color .18s ease;
+    word-break:break-all;
+  }
+  .btn .arrow{
+    flex:none;
+    color:var(--muted);
+    font-size:15px;
+    transition:transform .18s ease, color .18s ease;
+  }
+  .btn:hover{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:#fff;
+  }
+  .btn:hover .arrow{color:#fff;transform:translateX(3px)}
+  .btn:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+  }
+
+  footer{
+    margin-top:36px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+    font-size:12px;
+    color:#94a3b8;
+  }
+  footer code{
+    font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+    color:var(--muted);
+    background:#eef2f7;
+    border-radius:4px;
+    padding:1px 5px;
+  }
+
+  @media (max-width:560px){
+    body{padding:36px 16px 56px}
+    header{flex-direction:column;align-items:flex-start}
+    h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="eyebrow">Index</p>
+      <h1>综合</h1>
+      <p class="sub">点击文件名直接打开对应页面</p>
+    </div>
+    <span class="count">4 个页面</span>
+  </header>
+
+  <main class="grid">
+
+    <article class="card">
+      <span class="no">01</span>
+      <h2>净水器计算器</h2>
+      <p>输入纯度和水量，推演一晚或多晚之后的水质变化。</p>
+      <a class="btn" href="净水器计算器.html">
+        <span>净水器计算器.html</span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+    </article>
+
+    <article class="card">
+      <span class="no">02</span>
+      <h2>水培健康度计算器</h2>
+      <p>Hydroponic Health Lab，按水质与环境指标评估水培健康度。</p>
+      <a class="btn" href="水培健康度计算器.html">
+        <span>水培健康度计算器.html</span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+    </article>
+
+    <article class="card">
+      <span class="no">03</span>
+      <h2>罗非鱼净化计算器</h2>
+      <p>排污、矿化、吸收三步结算，测算重金属与化学残留。</p>
+      <a class="btn" href="罗非鱼净化计算器.html">
+        <span>罗非鱼净化计算器.html</span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+    </article>
+
+    <article class="card">
+      <span class="no">04</span>
+      <h2>芦苇净化方案对比</h2>
+      <p>预处理加每日芦苇净化，对比各方案达到 99.9% 所需天数。</p>
+      <a class="btn" href="芦苇净化方案对比.html">
+        <span>芦苇净化方案对比.html</span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+    </article>
+
+  </main>
+
+  <footer>
+    新增页面时，把 HTML 文件放进本目录，并在 <code>index.html</code> 中追加一张卡片。
+  </footer>
+
+</div>
+</body>
+</html>

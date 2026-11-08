@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>深空当铺 · 净水器计算器</title>
+<style>
+  :root{
+    --ink:#111827; --muted:#6b7280; --line:#e2e8f0;
+    --bg:#f1f5f9; --card:#ffffff; --accent:#c2410c; --accent-bg:#fff1e6;
+    --blue:#2563eb; --green:#059669;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:32px 16px 64px;
+    font-family:"Microsoft YaHei","PingFang SC",system-ui,-apple-system,Segoe UI,sans-serif;
+    background:var(--bg); color:var(--ink);
+  }
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:20px 22px;margin-bottom:16px;
+  }
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  input[type=number]{
+    width:100%;padding:10px 12px;font-size:16px;border:1px solid var(--line);
+    border-radius:9px;background:#fbfdff;color:var(--ink);outline:none;
+  }
+  input[type=number]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+  .hint{font-size:12px;color:var(--muted);margin-top:5px}
+  .result{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .big{font-size:48px;font-weight:700;letter-spacing:-1px}
+  .badge{
+    display:inline-block;padding:3px 12px;border-radius:999px;font-size:13px;
+    background:var(--accent-bg);color:var(--accent);font-weight:700;
+  }
+  .delta{font-size:14px;color:var(--muted)}
+  .delta b{color:var(--green)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+  @media(max-width:640px){.stats{grid-template-columns:1fr 1fr}}
+  .stat{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .stat .k{font-size:12px;color:var(--muted)}
+  .stat .v{font-size:18px;font-weight:700;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}
+  th{background:#1e293b;color:#fff;font-weight:600;font-size:13px}
+  tr:nth-child(even) td{background:#f8fafc}
+  td.num{font-variant-numeric:tabular-nums}
+  tr.hl td{background:#fff1e6 !important;color:#c2410c;font-weight:700}
+  h2{font-size:16px;margin:0 0 12px}
+  .note{font-size:12px;color:var(--muted);line-height:1.7}
+  .scroll{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+  .scroll table th{position:sticky;top:0}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>净水器计算器</h1>
+  <div class="sub">输入纯度和水量，算出一晚（或多晚）之后的水质。逻辑来自 <code>MachinePurifier.PurifyContainer</code>。</div>
+
+  <div class="card">
+    <div class="grid">
+      <div>
+        <label>水量（毫升）</label>
+        <input id="vol" type="number" value="2000" min="1" step="50">
+        <div class="hint">容器里液体的总体积</div>
+      </div>
+      <div>
+        <label>当前纯度（%）</label>
+        <input id="pur" type="number" value="90" min="0" max="100" step="0.01">
+        <div class="hint">例：90 表示 90.00%</div>
+      </div>
+      <div>
+        <label>质量模组总值</label>
+        <input id="qual" type="number" value="0" min="0" step="5">
+        <div class="hint">决定纯度天花板：100 → 99.9%，200 → 100%</div>
+      </div>
+      <div>
+        <label>性能模组总值（%）</label>
+        <input id="perf" type="number" value="0" min="0" step="5">
+        <div class="hint">只增加额度，通常意义不大</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>一晚之后</h2>
+    <div class="result">
+      <div class="big" id="outPurity">—</div>
+      <div class="badge" id="outTier">—</div>
+      <div class="delta" id="outDelta"></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">脏水加成 D</div><div class="v" id="stD">—</div></div>
+      <div class="stat"><div class="k">额度 B</div><div class="v" id="stB">—</div></div>
+      <div class="stat"><div class="k">上限</div><div class="v" id="stCap">—</div></div>
+      <div class="stat"><div class="k">需要去除</div><div class="v" id="stNeed">—</div></div>
+      <div class="stat"><div class="k">实际去除</div><div class="v" id="stTake">—</div></div>
+      <div class="stat"><div class="k">是否到顶</div><div class="v" id="stCapped">—</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>连续多晚</h2>
+    <div class="scroll"><table id="tblNights">
+      <thead><tr><th>晚</th><th>开始纯度</th><th>额度</th><th>去除</th><th>结束纯度</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="note" style="margin-top:10px">到上限或额度用尽就停止；最多显示 30 晚。</div>
+  </div>
+
+  <div class="card">
+    <h2>参考：同样水量下，不同初纯度的一晚结果</h2>
+    <div class="scroll"><table id="tblRef">
+      <thead><tr><th>初纯度</th><th>一晚后</th><th>档位</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h2>同样纯度下，不同水量的一晚结果</h2>
+    <div class="scroll"><table id="tblVol">
+      <thead><tr><th>水量</th><th>额度 B</th><th>去除</th><th>一晚后</th><th>档位</th><th>备注</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="note" style="margin-top:10px">
+      用当前输入的纯度、质量、性能计算。<b>1000–2000 mL 之间按 100 mL 步进</b>，两侧为粗档。橙色行是你当前的水量（没有完全匹配时，标出最接近的一档）；水量越大，固定的 25 mL 底越不够用，结果越差。
+    </div>
+  </div>
+
+  <div class="card note">
+    <b>计算规则</b><br>
+    ① D 按曲线分段线性插值：(9800,1) (9400,2) (8850,5) (8000,10) (6250,15) (3750,20)，低于 3750 取 20。<br>
+    ② 额度 B =（min(V, 10 000 mL) × 3‰ + 25 mL）×（D + 性能/100）× 1.25。<br>
+    ③ 上限 C = 10000 − round(100 × 质量系数)，质量系数：&lt;15→1.0，15→0.85，25→0.65，50→0.35，75→0.2，100→0.1，200→0。<br>
+    ④ 实际去除 = min(B, 杂质 − V×(10000−C)/10000)，扣除的杂质等量转成水。<br>
+    ⑤ 纯度按整数万分比计算，与游戏一致。<br><br>
+    <b>假设</b>：所有杂质都可被净化（游戏里水以外默认都可以）。如果是**滤芯**而不是净水器，结果完全不同——滤芯按孔径挑着拦，请用水质扫描仪实测。
+  </div>
+</div>
+
+<script>
+const CURVE = [[9800,1],[9400,2],[8850,5],[8000,10],[6250,15],[3750,20]];
+
+function dirt(p){
+  if (p >= CURVE[0][0]) return CURVE[0][1];
+  for (let i = 1; i < CURVE.length; i++){
+    const [p0,b0] = CURVE[i-1], [p1,b1] = CURVE[i];
+    if (p >= p1){
+      const t = (p0 - p) / (p0 - p1);
+      return b0 + t * (b1 - b0);
+    }
+  }
+  return CURVE[CURVE.length-1][1];
+}
+
+function purityMult(q){
+  if (q >= 200) return 0;
+  if (q >= 100) return 0.1;
+  if (q >= 75)  return 0.2;
+  if (q >= 50)  return 0.35;
+  if (q >= 25)  return 0.65;
+  if (q >= 15)  return 0.85;
+  return 1.0;
+}
+
+const capOf = q => 10000 - Math.round(100 * purityMult(q));
+
+function tier(p){
+  if (p >= 9990) return "纯水";
+  if (p >= 9900) return "优质水";
+  if (p >= 9800) return "基础水";
+  if (p >= 9600) return "幽灵水";
+  if (p >= 9000) return "铁锈水";
+  return "沟渠水";
+}
+
+// 内部按 µL 计算（1 mL = 1000 µL），界面与结果统一显示为 mL
+function night(V, water, q, perf){
+  const p = Math.floor(water * 10000 / V);         // 当天纯度（万分比）
+  let mult = dirt(p) + perf / 100;
+  if (mult < 0) mult = 0;
+  mult *= 1.25;
+  const B = Math.floor((Math.min(V, 10000000) * 3 / 1000 + 25000) * mult);
+  const C = capOf(q);
+  const E = Math.floor(V * (10000 - C) / 10000);
+  const contam = V - water;
+  let take = Math.min(B, contam - E);
+  if (take < 0) take = 0;
+  take = Math.floor(take);
+  return { p, d: dirt(p), mult, B, C, E, take, water: water + take };
+}
+
+function fmt(n, d = 0){
+  return n.toLocaleString("zh-CN", {minimumFractionDigits: d, maximumFractionDigits: d});
+}
+const mlStr = u => (u / 1000).toLocaleString("zh-CN", {minimumFractionDigits: 1, maximumFractionDigits: 1}) + " mL";
+
+function recalc(){
+  const volML = Math.max(1, Number(document.getElementById("vol").value) || 0);
+  const purPct = Math.min(100, Math.max(0, Number(document.getElementById("pur").value) || 0));
+  const q = Math.max(0, Number(document.getElementById("qual").value) || 0);
+  const perf = Number(document.getElementById("perf").value) || 0;
+
+  const V = volML * 1000;
+  const pInt = Math.round(purPct * 100);      // 纯度转整数万分比
+  let water = Math.round(V * pInt / 10000);   // 用水量也用整数算，避免浮点误差
+
+  // 一晚
+  const n1 = night(V, water, q, perf);
+  const p1 = Math.floor(n1.water * 10000 / V);
+
+  document.getElementById("outPurity").textContent = (p1 / 100).toFixed(2) + "%";
+  document.getElementById("outTier").textContent = tier(p1);
+  const dp = p1 - n1.p;
+  document.getElementById("outDelta").innerHTML =
+    "从 " + (n1.p / 100).toFixed(2) + "% 变化 <b>+" + (dp / 100).toFixed(2) + "%</b>";
+
+  document.getElementById("stD").textContent = n1.d.toFixed(2);
+  document.getElementById("stB").textContent = mlStr(n1.B);
+  document.getElementById("stCap").textContent = (n1.C / 100).toFixed(2) + "%";
+  document.getElementById("stNeed").textContent = mlStr(Math.max(0, (V - water) - n1.E));
+  document.getElementById("stTake").textContent = mlStr(n1.take);
+  const capped = p1 >= n1.C;
+  document.getElementById("stCapped").textContent = capped ? "是" : "否";
+
+  // 多晚
+  const tbody = document.querySelector("#tblNights tbody");
+  tbody.innerHTML = "";
+  let cur = water, last = -1;
+  for (let i = 1; i <= 30; i++){
+    const r = night(V, cur, q, perf);
+    const pBefore = Math.floor(cur * 10000 / V);
+    const pAfter = Math.floor(r.water * 10000 / V);
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td class='num'>" + i + "</td><td class='num'>" + (pBefore / 100).toFixed(2) +
+      "%</td><td class='num'>" + mlStr(r.B) + "</td><td class='num'>" + mlStr(r.take) +
+      "</td><td class='num'>" + (pAfter / 100).toFixed(2) + "%</td>";
+    tbody.appendChild(tr);
+    if (r.take <= 0 || pAfter === last) break;
+    last = pAfter;
+    cur = r.water;
+  }
+
+  // 参考表
+  const ref = document.querySelector("#tblRef tbody");
+  ref.innerHTML = "";
+  for (let pct = 80; pct <= 99.5; pct += 0.5){
+    const w = Math.round(V * Math.round(pct * 100) / 10000);
+    const r = night(V, w, q, perf);
+    const pa = Math.floor(r.water * 10000 / V);
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td class='num'>" + pct.toFixed(1) + "%</td><td class='num'>" +
+      (pa / 100).toFixed(2) + "%</td><td>" + tier(pa) + "</td>";
+    ref.appendChild(tr);
+  }
+
+  // 不同水量（1000–2000 之间按 100 mL 步进）
+  const vols = [100, 250, 500, 750];
+  for (let v = 1000; v <= 2000; v += 100) vols.push(v);
+  vols.push(2500, 3000, 4000, 5000, 7500, 10000);
+  let nearest = 0, bestD = Infinity;
+  vols.forEach((v, i) => { const d = Math.abs(v - volML); if (d < bestD){ bestD = d; nearest = i; } });
+  const volBody = document.querySelector("#tblVol tbody");
+  volBody.innerHTML = "";
+  for (const ml of vols){
+    const VV = ml * 1000;
+    const w = Math.round(VV * pInt / 10000);
+    const r = night(VV, w, q, perf);
+    const pa = Math.floor(r.water * 10000 / VV);
+    const capped = pa >= r.C;
+    const isCur = Math.abs(ml - volML) < 0.001;
+    const isNear = !isCur && ml === vols[nearest];
+    const tr = document.createElement("tr");
+    if (isCur || isNear) tr.className = "hl";
+    tr.innerHTML =
+      "<td class='num'>" + ml.toLocaleString("zh-CN") + " mL</td>" +
+      "<td class='num'>" + mlStr(r.B) + "</td>" +
+      "<td class='num'>" + mlStr(r.take) + "</td>" +
+      "<td class='num'>" + (pa / 100).toFixed(2) + "%</td>" +
+      "<td>" + tier(pa) + "</td>" +
+      "<td>" + (capped ? "到顶（上限 " + (r.C / 100).toFixed(2) + "%）" : "未到顶") +
+      (isNear ? " · 最接近当前" : "") + "</td>";
+    volBody.appendChild(tr);
+  }
+}
+
+document.querySelectorAll("input").forEach(el => el.addEventListener("input", recalc));
+recalc();
+</script>
+</body>
+</html>

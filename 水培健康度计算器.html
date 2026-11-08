@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>水培健康度计算器</title>
+<style>
+  :root{
+    --bg:#08111f;
+    --bg-2:#0b1424;
+    --panel:#101b2e;
+    --panel-2:#0d1728;
+    --line:#26344a;
+    --line-soft:rgba(148,163,184,.13);
+    --ink:#e8eef8;
+    --muted:#92a4bd;
+    --muted-2:#6f819b;
+    --accent:#2dd4bf;
+    --accent-2:#5eead4;
+    --blue:#60a5fa;
+    --good:#34d399;
+    --warn:#fbbf24;
+    --bad:#f87171;
+    --purple:#c084fc;
+    --orange:#fb923c;
+    --radius:16px;
+    --shadow:0 18px 50px rgba(0,0,0,.26);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    min-height:100vh;
+    padding:0;
+    color:var(--ink);
+    background:
+      radial-gradient(1100px 540px at 8% -12%, rgba(45,212,191,.13), transparent 58%),
+      radial-gradient(900px 520px at 102% -2%, rgba(96,165,250,.11), transparent 55%),
+      radial-gradient(900px 700px at 50% 110%, rgba(52,211,153,.055), transparent 55%),
+      var(--bg);
+    font-family:"Microsoft YaHei","PingFang SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    background-image:
+      linear-gradient(rgba(148,163,184,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,.035) 1px, transparent 1px);
+    background-size:44px 44px;
+    mask-image:linear-gradient(to bottom, rgba(0,0,0,.55), transparent 68%);
+  }
+  .page{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:34px 18px 68px}
+  .hero{display:flex;align-items:flex-end;justify-content:space-between;gap:26px;margin-bottom:22px;flex-wrap:wrap}
+  .hero-copy{max-width:760px}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12px;font-weight:700;letter-spacing:.08em;
+    color:var(--accent-2);text-transform:uppercase;
+  }
+  .eyebrow .pulse{
+    width:7px;height:7px;border-radius:50%;background:var(--accent);
+    box-shadow:0 0 0 4px rgba(45,212,191,.12),0 0 16px rgba(45,212,191,.7);
+  }
+  h1{
+    margin:9px 0 10px;
+    font-size:clamp(30px,4.4vw,46px);
+    line-height:1.08;
+    letter-spacing:-1.6px;
+    color:#f8fafc;
+  }
+  h1 .grad{
+    background:linear-gradient(92deg,#f8fafc 4%,#9af7e5 53%,#7dd3fc 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .sub{margin:0;color:var(--muted);font-size:13.5px;line-height:1.8}
+  .sub b{color:#c9f9ee;font-weight:700}
+  .hero-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding-bottom:4px}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:6px 10px;border-radius:999px;
+    border:1px solid var(--line);background:rgba(13,23,40,.62);
+    color:#b8c7dc;font-size:11.5px;font-weight:600;white-space:nowrap;
+  }
+  .chip .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:18px;align-items:start}
+  .inputs{min-width:0}
+  .results{position:sticky;top:18px;display:grid;gap:18px;min-width:0}
+  .card{
+    background:linear-gradient(180deg,rgba(17,28,47,.94),rgba(13,23,40,.97));
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:20px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::after{
+    content:"";
+    position:absolute;inset:0 0 auto 0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(94,234,212,.38),transparent);
+    opacity:.5;pointer-events:none;
+  }
+  .inputs > .card + .card{margin-top:18px}
+  .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
+  .head-title{display:flex;align-items:flex-start;gap:10px;min-width:0}
+  .head-mark{
+    flex:0 0 auto;width:9px;height:9px;margin-top:6px;border-radius:50%;
+    background:var(--accent);box-shadow:0 0 12px rgba(45,212,191,.75);
+  }
+  .card h2{margin:0;font-size:16px;line-height:1.35;color:#f1f5f9;letter-spacing:-.2px}
+  .card-head p{margin:5px 0 0;color:var(--muted);font-size:11.5px;line-height:1.65}
+  .head-tools{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;flex:0 0 auto}
+  .mini-btn{
+    appearance:none;border:1px solid var(--line);background:#132038;color:#b9c8dc;
+    border-radius:8px;padding:6px 9px;font-size:11px;font-family:inherit;cursor:pointer;
+    transition:.16s ease;white-space:nowrap;
+  }
+  .mini-btn:hover{border-color:rgba(45,212,191,.55);color:var(--accent-2);background:#14263c}
+  .mini-btn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{
+    outline:2px solid rgba(45,212,191,.65);outline-offset:2px;
+  }
+  .field-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .field-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .field{min-width:0}
+  .field > label{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    margin-bottom:6px;color:var(--muted);font-size:11.5px;font-weight:600;
+  }
+  .field > label .tag{color:var(--muted-2);font-weight:400;font-size:10.5px}
+  .input-shell{position:relative}
+  .input-shell input{
+    width:100%;
+    padding:10px 48px 10px 11px;
+    font-size:15px;line-height:1.2;
+    color:var(--ink);
+    background:#0a1424;
+    border:1px solid var(--line);
+    border-radius:9px;
+    outline:none;
+    font-family:inherit;
+    font-variant-numeric:tabular-nums;
+    transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
+  }
+  .input-shell.no-suffix input{padding-right:11px}
+  .input-shell input:hover{border-color:#334763}
+  .input-shell input:focus{border-color:rgba(45,212,191,.8);box-shadow:0 0 0 3px rgba(45,212,191,.13);background:#0b1728}
+  .input-shell .suffix{
+    position:absolute;right:10px;top:50%;transform:translateY(-50%);
+    color:var(--muted-2);font-size:10.5px;pointer-events:none;font-weight:600;
+  }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  input[type=number]{-moz-appearance:textfield;appearance:textfield}
+  .hint{margin-top:5px;color:var(--muted-2);font-size:10.5px;line-height:1.55}
+  .rule-strip{
+    display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+    margin-top:14px;padding:10px 12px;
+    border:1px solid rgba(45,212,191,.16);border-radius:10px;
+    background:rgba(45,212,191,.045);
+    color:#a7c7c2;font-size:11px;line-height:1.6;
+  }
+  .rule-strip b{color:#b9f8eb;font-weight:700}
+  .rule-strip .sep{width:1px;height:13px;background:rgba(45,212,191,.25)}
+  .table-shell{
+    overflow:auto;border:1px solid var(--line);border-radius:11px;
+    background:rgba(8,17,31,.58);
+  }
+  .table-shell::-webkit-scrollbar{width:10px;height:10px}
+  .table-shell::-webkit-scrollbar-track{background:#0a1424}
+  .table-shell::-webkit-scrollbar-thumb{background:#2b3a52;border-radius:8px;border:2px solid #0a1424}
+  .table-shell::-webkit-scrollbar-thumb:hover{background:#3b4e69}
+  .scroll-hint{display:none;margin-top:7px;color:var(--muted-2);font-size:10px;text-align:right;line-height:1.4}
+  @media(max-width:720px){.scroll-hint{display:block}}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{padding:9px 11px;border-bottom:1px solid var(--line-soft);text-align:left;vertical-align:middle}
+  th{
+    position:sticky;top:0;z-index:2;
+    background:#0a1424;color:#aebdd1;font-size:10.5px;font-weight:700;
+    letter-spacing:.04em;white-space:nowrap;
+  }
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr{transition:background .15s ease}
+  tbody tr:hover td{background:rgba(45,212,191,.035)}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .poll-table{min-width:650px}
+  .poll-table th:nth-child(2){width:150px}
+  .mat{display:flex;align-items:center;gap:10px;min-width:138px}
+  .mat-icon{
+    flex:0 0 auto;width:30px;height:30px;border-radius:9px;
+    display:grid;place-items:center;
+    color:var(--c);background:#0a1424;border:1px solid var(--line);
+    font-size:12px;font-weight:800;
+    box-shadow:inset 0 0 18px rgba(255,255,255,.018);
+  }
+  .mat-text{min-width:0}
+  .mat-name{display:block;color:#e5edf8;font-size:12.5px;font-weight:700;line-height:1.25}
+  .mat-sub{display:block;margin-top:2px;color:var(--muted-2);font-size:9.5px;letter-spacing:.02em;white-space:nowrap}
+  .amount-shell{position:relative;min-width:126px}
+  .amount-shell input{
+    width:100%;padding:7px 39px 7px 9px;
+    color:var(--ink);background:#091322;border:1px solid #2b3a52;border-radius:7px;
+    font-family:inherit;font-size:13px;font-variant-numeric:tabular-nums;outline:none;
+    transition:.16s ease;
+  }
+  .amount-shell input:focus{border-color:rgba(45,212,191,.8);box-shadow:0 0 0 3px rgba(45,212,191,.11)}
+  .amount-shell span{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--muted-2);font-size:10px;pointer-events:none}
+  .idx{font-weight:700;color:#dbe6f5}
+  .loss{font-weight:700;color:#8496ad}
+  .loss.on{color:var(--warn)}
+  .loss.zero{color:#5f728c}
+  .loss-badge{
+    display:inline-flex;align-items:center;justify-content:flex-end;
+    min-width:46px;padding:3px 7px;border-radius:6px;
+  }
+  .loss-badge.on{color:#fcd34d;background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.16)}
+  .loss-badge.zero{color:#71839b;background:rgba(148,163,184,.045);border:1px solid rgba(148,163,184,.08)}
+  .poll-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+  .crop-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    margin-bottom:12px;padding:10px 12px;border:1px solid var(--line-soft);border-radius:10px;
+    background:rgba(8,17,31,.42);
+  }
+  .crop-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .crop-label{color:#cfe0f1;font-size:11px;font-weight:700}
+  .crop-formula{color:var(--muted-2);font-size:10px;line-height:1.5}
+  .crop-formula b{color:var(--accent-2);font-weight:800;font-variant-numeric:tabular-nums}
+  .crop-select{
+    flex:0 0 auto;min-width:210px;max-width:100%;
+    padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+    background:#0a1424;color:var(--ink);font-family:inherit;font-size:12px;outline:none;
+  }
+  .crop-select:focus{border-color:rgba(45,212,191,.8);box-shadow:0 0 0 3px rgba(45,212,191,.11)}
+  @media(max-width:560px){
+    .crop-row{align-items:stretch}
+    .crop-select{width:100%;min-width:0}
+  }
+  .total-box{
+    padding:10px 12px;border:1px solid var(--line-soft);border-radius:10px;
+    background:rgba(8,17,31,.46);min-width:0;
+  }
+  .total-box .k{display:block;color:var(--muted-2);font-size:10px;line-height:1.35}
+  .total-box .v{display:block;margin-top:4px;color:#eaf2ff;font-size:15px;font-weight:800;line-height:1.25;font-variant-numeric:tabular-nums}
+  .total-box .v small{color:var(--muted);font-size:10px;font-weight:500}
+  .total-box.accent{border-color:rgba(45,212,191,.22);background:rgba(45,212,191,.055)}
+  .total-box.accent .v{color:var(--accent-2)}
+  .mineral-readouts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
+  .readout{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 12px;border:1px solid var(--line-soft);border-radius:10px;
+    background:rgba(8,17,31,.46);min-width:0;
+  }
+  .readout .k{color:var(--muted-2);font-size:10.5px;line-height:1.4}
+  .readout .v{color:#eaf2ff;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .readout .v small{color:var(--muted);font-size:10px;font-weight:500}
+  .water-table{min-width:390px}
+  .water-table th,.water-table td{padding:8px 9px}
+  .water-table tr.total-row td{
+    background:#0d1a2c;border-top:1px solid #314159;
+    color:#dce9f7;font-weight:700;
+  }
+  .water-table-shell{margin-top:12px}
+  .water-summary{margin-top:12px}
+  .water-poll-title{margin-top:11px;color:var(--muted-2);font-size:10px;font-weight:700}
+  .water-poll-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:6px}
+  .water-poll-item{
+    display:flex;align-items:center;justify-content:space-between;gap:6px;
+    padding:6px 8px;border:1px solid var(--line-soft);border-radius:7px;
+    background:rgba(8,17,31,.4);color:var(--muted);font-size:10px;
+  }
+  .water-poll-item b{color:#dce9f7;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .water-scroll-hint{display:none;margin-top:7px;color:var(--muted-2);font-size:10px;text-align:right;line-height:1.4}
+  @media(max-width:460px){
+    .water-poll-list{grid-template-columns:1fr 1fr}
+    .water-scroll-hint{display:block}
+  }
+  .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:1px}
+  .status-dot.ok{background:var(--good);box-shadow:0 0 7px rgba(52,211,153,.55)}
+  .status-dot.low{background:var(--blue);box-shadow:0 0 7px rgba(96,165,250,.55)}
+  .status-dot.high{background:var(--bad);box-shadow:0 0 7px rgba(248,113,113,.55)}
+  .sum-card{padding:20px}
+  .summary-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+  .summary-copy{min-width:0}
+  .kicker{color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.04em}
+  .health-big{display:flex;align-items:baseline;gap:7px;margin-top:5px;line-height:1}
+  .health-big #finalHealth{
+    font-size:46px;font-weight:800;letter-spacing:-2px;color:#f8fafc;
+    font-variant-numeric:tabular-nums;
+  }
+  .health-big .denom{color:var(--muted-2);font-size:14px;font-weight:600;letter-spacing:0}
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;margin-top:10px;
+    padding:4px 9px;border-radius:999px;
+    font-size:10.5px;font-weight:800;letter-spacing:.02em;white-space:nowrap;
+    border:1px solid transparent;
+  }
+  .badge.good{color:#8cf5c7;background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.22)}
+  .badge.mid{color:#fcd34d;background:rgba(251,191,36,.09);border-color:rgba(251,191,36,.2)}
+  .badge.bad{color:#fca5a5;background:rgba(248,113,113,.09);border-color:rgba(248,113,113,.2)}
+  .delta-badge{
+    flex:0 0 auto;text-align:right;padding:8px 10px;
+    border:1px solid var(--line-soft);border-radius:10px;background:rgba(8,17,31,.46);
+  }
+  .delta-badge .k{display:block;color:var(--muted-2);font-size:9.5px;white-space:nowrap}
+  .delta-badge .v{display:block;margin-top:2px;color:#fca5a5;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .delta-badge .v small{color:var(--muted);font-size:10px;font-weight:500}
+  .delta-badge.zero .v{color:#86efac}
+  .health-track{
+    position:relative;height:8px;margin-top:15px;border-radius:999px;overflow:hidden;
+    background:rgba(148,163,184,.12);border:1px solid rgba(148,163,184,.08);
+  }
+  .health-fill{
+    width:100%;height:100%;border-radius:inherit;
+    background:linear-gradient(90deg,#34d399,#2dd4bf);
+    transition:width .35s ease, background .25s ease;
+    box-shadow:0 0 12px rgba(45,212,191,.28);
+  }
+  .health-track .ticks{position:absolute;inset:0;background:linear-gradient(90deg,transparent 24.8%,rgba(8,17,31,.22) 25%,transparent 25.2%,transparent 49.8%,rgba(8,17,31,.22) 50%,transparent 50.2%,transparent 74.8%,rgba(8,17,31,.22) 75%,transparent 75.2%)}
+  .health-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:7px;color:var(--muted-2);font-size:9.5px}
+  .health-meta b{color:#b8c8db;font-weight:600}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}
+  .stat{
+    padding:9px 10px;border:1px solid var(--line-soft);border-radius:9px;
+    background:rgba(8,17,31,.44);min-width:0;
+  }
+  .stat .k{display:block;color:var(--muted-2);font-size:9.5px;line-height:1.3}
+  .stat .v{display:block;margin-top:3px;color:#eaf2ff;font-size:14px;font-weight:800;line-height:1.25;font-variant-numeric:tabular-nums}
+  .stat .v small{color:var(--muted);font-size:9.5px;font-weight:500}
+  .stat.good .v{color:#86efac}
+  .stat.warn .v{color:#fcd34d}
+  .stat.bad .v{color:#fca5a5}
+  .summary-note{
+    margin-top:12px;padding-top:11px;border-top:1px solid var(--line-soft);
+    color:var(--muted);font-size:10.5px;line-height:1.7;
+  }
+  .summary-note b{color:#c6f7ec;font-weight:700}
+  .warnings{display:grid;gap:6px;margin-top:10px}
+  .warning{
+    display:flex;gap:7px;align-items:flex-start;
+    padding:7px 9px;border-radius:8px;
+    border:1px solid rgba(251,191,36,.18);background:rgba(251,191,36,.055);
+    color:#e8c978;font-size:10.5px;line-height:1.55;
+  }
+  .warning.danger{border-color:rgba(248,113,113,.2);background:rgba(248,113,113,.06);color:#f6a6a6}
+  .warning .warn-mark{flex:0 0 auto;color:inherit;font-weight:800;line-height:1.5}
+  .chart-card{padding:18px 18px 14px}
+  .chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .chart-head h2{font-size:14px}
+  .chart-head p{margin-top:3px}
+  .chart-badge{
+    flex:0 0 auto;padding:3px 7px;border-radius:999px;
+    color:#9db0c7;background:rgba(148,163,184,.07);border:1px solid var(--line-soft);
+    font-size:9.5px;font-weight:700;white-space:nowrap;
+  }
+  .chart-box{min-height:140px;display:flex;align-items:center;justify-content:center;max-width:560px;margin:0 auto;width:100%}
+  .chart-box svg{display:block;width:100%;height:auto;overflow:visible}
+  .chart-tick{fill:#71839b;font-size:18px;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif}
+  .chart-axis{fill:#5d7089;font-size:17px;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;letter-spacing:.04em}
+  .chart-band-label{fill:#7ca7a1;font-size:17px;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif}
+  .chart-empty{
+    width:100%;padding:28px 10px;text-align:center;color:var(--muted-2);
+    font-size:11px;line-height:1.7;border:1px dashed var(--line);border-radius:10px;
+  }
+  .legend{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:7px;color:var(--muted-2);font-size:9.5px}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .legend i{display:inline-block;width:7px;height:7px;border-radius:50%}
+  .detail-card{padding:20px}
+  .detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:13px;flex-wrap:wrap}
+  .detail-meta{display:flex;gap:7px;flex-wrap:wrap}
+  .meta-pill{
+    padding:4px 8px;border-radius:7px;border:1px solid var(--line-soft);
+    background:rgba(8,17,31,.4);color:var(--muted);font-size:10px;white-space:nowrap;
+  }
+  .meta-pill b{color:#cfe0f1;font-weight:700}
+  .detail-shell{max-height:430px}
+  .detail-table{min-width:760px}
+  .detail-table th{top:0}
+  .detail-table td{padding:8px 11px}
+  .detail-table tr.total-row td{
+    position:sticky;bottom:0;background:#0d1a2c;border-top:1px solid #314159;
+    color:#dce9f7;font-weight:700;z-index:1;
+  }
+  .mini-status{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:2px 7px;border-radius:999px;font-size:9.5px;font-weight:700;white-space:nowrap;
+  }
+  .mini-status.ok{color:#8cf5c7;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.16)}
+  .mini-status.low{color:#93c5fd;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.18)}
+  .mini-status.high{color:#fca5a5;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.18)}
+  .mini-status i{width:5px;height:5px;border-radius:50%;background:currentColor}
+  .empty-row td{text-align:center;color:var(--muted-2);padding:22px 10px;font-size:11px}
+  .notes-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-top:18px}
+  .note-card{padding:18px 20px}
+  .note-card h2{font-size:14px;margin-bottom:10px}
+  .note-card ul{margin:0;padding-left:17px;color:var(--muted);font-size:11.5px;line-height:1.85}
+  .note-card li + li{margin-top:4px}
+  .note-card li b{color:#ccefe8;font-weight:700}
+  .note-card code{
+    padding:1px 5px;border-radius:4px;background:#081322;border:1px solid rgba(148,163,184,.08);
+    color:#9deee0;font-size:10.5px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  }
+  .ref-table{min-width:300px}
+  .ref-table td,.ref-table th{padding:7px 11px}
+  .ref-table tbody tr.active td{background:rgba(45,212,191,.09);color:#d7fff6}
+  .ref-table tbody tr.active td:first-child{box-shadow:inset 2px 0 0 var(--accent)}
+  .ref-table td:last-child,.ref-table th:last-child{text-align:right}
+  .footer{margin-top:20px;text-align:center;color:#53657d;font-size:10.5px;line-height:1.7}
+  .toast{
+    position:fixed;left:50%;bottom:24px;transform:translate(-50%,18px);
+    z-index:50;opacity:0;pointer-events:none;
+    padding:9px 15px;border-radius:999px;
+    border:1px solid rgba(45,212,191,.3);background:#0c2a28;color:#c9fff5;
+    font-size:12px;font-weight:700;box-shadow:0 12px 40px rgba(0,0,0,.4);
+    transition:opacity .2s ease, transform .2s ease;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  @media(max-width:1060px){
+    .layout{grid-template-columns:minmax(0,1fr) 360px}
+    .page{padding-left:15px;padding-right:15px}
+  }
+  @media(max-width:980px){
+    .layout{grid-template-columns:1fr}
+    .results{position:static;grid-template-columns:1fr 1fr}
+    .sum-card{grid-column:1/-1}
+    .chart-card{grid-column:1/-1}
+    .field-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  }
+  @media(max-width:720px){
+    .page{padding-top:25px}
+    .hero{align-items:flex-start}
+    .hero-chips{justify-content:flex-start}
+    .field-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .results{grid-template-columns:1fr}
+    .sum-card,.chart-card{grid-column:auto}
+    .poll-summary{grid-template-columns:1fr 1fr 1fr}
+    .mineral-readouts{grid-template-columns:1fr}
+    .notes-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:460px){
+    .page{padding-left:11px;padding-right:11px}
+    .card{padding:16px}
+    .field-grid{grid-template-columns:1fr}
+    .poll-summary{grid-template-columns:1fr}
+    .health-big #finalHealth{font-size:40px}
+    .head-tools{flex-direction:column;align-items:flex-end}
+  }
+  @media(max-width:380px){
+    .summary-top{flex-wrap:wrap}
+    .delta-badge{text-align:left}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{scroll-behavior:auto!important;transition:none!important}
+  }
+  @media print{
+    body{background:#fff;color:#111}
+    body::before,.hero-chips,.head-tools,.toast{display:none!important}
+    .page{max-width:none;padding:0}
+    .layout{display:block}
+    .results{position:static}
+    .card{box-shadow:none;background:#fff;border-color:#ccc;color:#111}
+    .sub,.hint,.card-head p{color:#555}
+    input{background:#fff!important;color:#111!important;border-color:#bbb!important}
+    .table-shell{background:#fff}
+    th{background:#eee;color:#111}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="pulse"></span>Hydroponic Health Lab</div>
+      <h1><span class="grad">水培健康度计算器</span></h1>
+      <p class="sub">
+        输入六类污染、植物污染敏感度、生长进度与矿物养分，按
+        <b>每点生长进度逐次检查</b>，结算一整晚的健康损失与夜间水耗。
+        污染物、矿物与水均按体积 <b>mL</b> 计，浓度分母是当前<b>纯水量</b>。
+      </p>
+    </div>
+    <div class="hero-chips" aria-label="计算规则摘要">
+      <span class="chip"><span class="dot"></span>0.01% = 指数 1</span>
+      <span class="chip">逐点检查矿物</span>
+      <span class="chip">四舍五入</span>
+      <span class="chip">含区间边界</span>
+      <span class="chip">健康后扣水</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <main class="inputs">
+      <section class="card">
+        <div class="card-head">
+          <div class="head-title">
+            <span class="head-mark"></span>
+            <div>
+              <h2>基础参数</h2>
+              <p>一次结算一个晚上；生长进度按整数点计。</p>
+            </div>
+          </div>
+          <div class="head-tools">
+            <button class="mini-btn" type="button" id="btnDemo">填入示例</button>
+            <button class="mini-btn" type="button" id="btnReset">重置</button>
+          </div>
+        </div>
+
+        <div class="field-grid">
+          <div class="field">
+            <label for="water">当前纯水量 <span class="tag">分母</span></label>
+            <div class="input-shell">
+              <input id="water" type="number" min="0.001" step="1" value="1000" inputmode="decimal">
+              <span class="suffix">mL</span>
+            </div>
+            <div class="hint">不含污染物与矿物</div>
+          </div>
+          <div class="field">
+            <label for="sensitivity">植物污染敏感度</label>
+            <div class="input-shell no-suffix">
+              <input id="sensitivity" type="number" min="0" step="0.01" value="1" inputmode="decimal">
+            </div>
+            <div class="hint">指数乘此值后取整</div>
+          </div>
+          <div class="field">
+            <label for="growth">今晚生长进度 <span class="tag">点</span></label>
+            <div class="input-shell">
+              <input id="growth" type="number" min="0" max="200" step="1" value="8" inputmode="numeric">
+              <span class="suffix">点</span>
+            </div>
+            <div class="hint">普通水培系统通常为 8</div>
+          </div>
+          <div class="field">
+            <label for="health">初始健康</label>
+            <div class="input-shell">
+              <input id="health" type="number" min="0" max="100" step="0.01" value="100" inputmode="decimal">
+              <span class="suffix">/100</span>
+            </div>
+            <div class="hint">最终健康最低为 0</div>
+          </div>
+        </div>
+
+        <div class="rule-strip">
+          <span>污染原始指数 = 成分量 ÷ 纯水量 × 10000</span>
+          <span class="sep"></span>
+          <span>调整指数 = <b>round(原始指数 × 敏感度)</b></span>
+          <span class="sep"></span>
+          <span>每点检查一次矿物</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div class="head-title">
+            <span class="head-mark"></span>
+            <div>
+              <h2>六类污染</h2>
+              <p>填各成分的体积（mL）。任一项为 0 即视为未检出。</p>
+            </div>
+          </div>
+          <div class="head-tools">
+            <span class="chart-badge">单位：mL</span>
+          </div>
+        </div>
+
+        <div class="crop-row">
+          <div class="crop-copy">
+            <span class="crop-label">作物污染系数</span>
+            <span class="crop-formula">六类表内损失合计 × 系数 = 实际每点 <b id="effectivePerPoint">0.00</b> 健康</span>
+          </div>
+          <select id="crop" class="crop-select" aria-label="选择作物污染系数">
+            <option value="1" selected>营养果 ×1.00</option>
+            <option value="1.26">韧棉 ×1.26</option>
+            <option value="1.01">梦帽菇 ×1.01</option>
+            <option value="1.01">咖啡豆 ×1.01</option>
+            <option value="1.25">荧光莓 ×1.25</option>
+            <option value="0">填料草 ×0（不受污染影响）</option>
+            <option value="0">水培芦苇 ×0（不受污染影响）</option>
+          </select>
+        </div>
+
+        <div class="table-shell">
+          <table class="poll-table" aria-label="六类污染输入与每点损失">
+            <thead>
+              <tr>
+                <th>污染成分</th>
+                <th>含量</th>
+                <th class="num">浓度</th>
+                <th class="num">原始指数</th>
+                <th class="num">调整指数</th>
+                <th class="num">每点损失（表内）</th>
+              </tr>
+            </thead>
+            <tbody id="pollBody"></tbody>
+          </table>
+        </div>
+        <div class="scroll-hint">左右滑动表格，查看原始指数、调整指数与表内每点损失 →</div>
+
+        <div class="poll-summary">
+          <div class="total-box">
+            <span class="k">六类合计 · 每点（表内）</span>
+            <span class="v" id="sumPerPoint">0.00 <small>健康</small></span>
+          </div>
+          <div class="total-box">
+            <span class="k">今晚进度</span>
+            <span class="v" id="growthEcho">8 <small>点</small></span>
+          </div>
+          <div class="total-box accent">
+            <span class="k">整晚污染损失</span>
+            <span class="v" id="pollTotal">0.00 <small>健康</small></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div class="head-title">
+            <span class="head-mark"></span>
+            <div>
+              <h2>矿物养分</h2>
+              <p>先按当前矿物判定并扣健康，再扣掉本点消耗；因此同一晚后面的检查会更低。</p>
+            </div>
+          </div>
+          <div class="head-tools">
+            <span class="chart-badge">1 片 = 15 mL</span>
+          </div>
+        </div>
+
+        <div class="field-grid">
+          <div class="field">
+            <label for="mineral">矿物量</label>
+            <div class="input-shell">
+              <input id="mineral" type="number" min="0" step="0.001" value="15" inputmode="decimal">
+              <span class="suffix">mL</span>
+            </div>
+            <div class="hint">按纯水量算浓度</div>
+          </div>
+          <div class="field">
+            <label for="consume">每点消耗矿物</label>
+            <div class="input-shell">
+              <input id="consume" type="number" min="0" step="0.001" value="0.05" inputmode="decimal">
+              <span class="suffix">mL/点</span>
+            </div>
+            <div class="hint">营养果约 0.05</div>
+          </div>
+          <div class="field">
+            <label for="lower">适宜下限</label>
+            <div class="input-shell">
+              <input id="lower" type="number" min="0" step="0.01" value="0.5" inputmode="decimal">
+              <span class="suffix">%</span>
+            </div>
+            <div class="hint">包含边界</div>
+          </div>
+          <div class="field">
+            <label for="upper">适宜上限</label>
+            <div class="input-shell">
+              <input id="upper" type="number" min="0" step="0.01" value="2.5" inputmode="decimal">
+              <span class="suffix">%</span>
+            </div>
+            <div class="hint">包含边界</div>
+          </div>
+        </div>
+
+        <div class="mineral-readouts">
+          <div class="readout">
+            <span class="k">第 1 次检查浓度<br><span style="color:var(--muted-2)">向下取整到 0.01%</span></span>
+            <span class="v" id="startConc">1.50%</span>
+          </div>
+          <div class="readout">
+            <span class="k">生长后矿物 · 耗水前<br><span style="color:var(--muted-2)">共消耗 <span id="consumeTotal">0.400</span> mL</span></span>
+            <span class="v" id="endMineral">14.600 <small>mL</small></span>
+          </div>
+        </div>
+
+        <div class="rule-strip">
+          <span>低于下限：<b>每个检查点 −1.00</b></span>
+          <span class="sep"></span>
+          <span>高于上限：<b>每个检查点 −0.50</b></span>
+          <span class="sep"></span>
+          <span>区间内：<b>−0.00</b></span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div class="head-title">
+            <span class="head-mark"></span>
+            <div>
+              <h2>夜间水耗</h2>
+              <p>全部生长检查结束后，按混合液比例扣除；水量变化不影响已经结算的本晚健康。</p>
+            </div>
+          </div>
+          <div class="head-tools">
+            <span class="chart-badge">健康结算后</span>
+          </div>
+        </div>
+
+        <div class="field-grid two">
+          <div class="field">
+            <label for="waterUse">每晚消耗水量</label>
+            <div class="input-shell">
+              <input id="waterUse" type="number" min="0" step="0.001" value="100" inputmode="decimal">
+              <span class="suffix">mL</span>
+            </div>
+            <div class="hint">按混合液总量扣除，不是只扣纯水</div>
+          </div>
+          <div class="field">
+            <label>结算后纯水</label>
+            <div class="total-box" style="margin-top:0;padding:10px 12px">
+              <span class="v" id="waterAfterPure">901.439 <small>mL</small></span>
+            </div>
+            <div class="hint">下一晚浓度计算的分母</div>
+          </div>
+        </div>
+
+        <div class="poll-summary water-summary">
+          <div class="total-box">
+            <span class="k">实际耗水 · 混合液</span>
+            <span class="v" id="waterActual">100.000 <small>mL</small></span>
+          </div>
+          <div class="total-box">
+            <span class="k">耗水比例</span>
+            <span class="v" id="waterRatio">9.86%</span>
+          </div>
+          <div class="total-box accent">
+            <span class="k">结算后总液</span>
+            <span class="v" id="waterAfterTotal">914.600 <small>mL</small></span>
+          </div>
+        </div>
+
+        <div class="table-shell water-table-shell">
+          <table class="water-table" aria-label="夜间耗水前后各成分体积">
+            <thead>
+              <tr>
+                <th>成分</th>
+                <th class="num">耗水前</th>
+                <th class="num">随水带走</th>
+                <th class="num">耗水后</th>
+              </tr>
+            </thead>
+            <tbody id="waterBody"></tbody>
+          </table>
+        </div>
+        <div class="water-scroll-hint">左右滑动表格，查看耗水前后完整数据 →</div>
+        <div class="hint">下一晚请用耗水后的纯水、矿物与污染物量重新计算；比例按本页跟踪的纯水、矿物与六类污染计算。</div>
+        <div class="water-poll-title">各污染物耗水后体积</div>
+        <div class="water-poll-list" id="waterPollList"></div>
+
+        <div class="rule-strip">
+          <span>耗水发生在本晚健康结算之后</span>
+          <span class="sep"></span>
+          <span>水、矿物、污染物按占比一起减少</span>
+          <span class="sep"></span>
+          <span>不计算净水 / 净化</span>
+        </div>
+      </section>
+    </main>
+
+    <aside class="results" aria-label="结算结果">
+      <section class="card sum-card">
+        <div class="summary-top">
+          <div class="summary-copy">
+            <div class="kicker">今晚结算后</div>
+            <div class="health-big"><span id="finalHealth">100.00</span><span class="denom">/ 100</span></div>
+            <span class="badge good" id="healthBadge">健康良好</span>
+          </div>
+          <div class="delta-badge" id="deltaBadge">
+            <span class="k">实际扣除</span>
+            <span class="v" id="actualLoss">0.00 <small>健康</small></span>
+          </div>
+        </div>
+
+        <div class="health-track" aria-hidden="true">
+          <div class="health-fill" id="healthFill"></div>
+          <div class="ticks"></div>
+        </div>
+        <div class="health-meta">
+          <span>初始 <b id="initialEcho">100.00</b></span>
+          <span>0</span>
+          <span><b id="healthPercent">100.0%</b></span>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat" id="statPollBox">
+            <span class="k">污染损失</span>
+            <span class="v" id="statPoll">0.00</span>
+          </div>
+          <div class="stat" id="statMineralBox">
+            <span class="k">矿物损失</span>
+            <span class="v" id="statMineral">0.00</span>
+          </div>
+          <div class="stat" id="statTotalBox">
+            <span class="k">理论总损失</span>
+            <span class="v" id="statTotal">0.00</span>
+          </div>
+          <div class="stat">
+            <span class="k">生长后矿物</span>
+            <span class="v" id="statMineralEnd">14.60 <small>mL</small></span>
+          </div>
+          <div class="stat">
+            <span class="k">结算后纯水</span>
+            <span class="v" id="statWaterAfter">901.44 <small>mL</small></span>
+          </div>
+          <div class="stat">
+            <span class="k">实际耗水</span>
+            <span class="v" id="statWaterUse">100.00 <small>mL</small></span>
+          </div>
+        </div>
+
+        <div class="summary-note" id="summaryNote">等待输入。</div>
+        <div class="warnings" id="warnings" aria-live="polite"></div>
+      </section>
+
+      <section class="card chart-card">
+        <div class="chart-head">
+          <div class="head-title">
+            <span class="head-mark"></span>
+            <div>
+              <h2>矿物浓度轨迹</h2>
+              <p>每个点取检查前、取整后的浓度。</p>
+            </div>
+          </div>
+          <span class="chart-badge" id="chartBadge">8 次检查</span>
+        </div>
+        <div class="chart-box" id="chartBox">
+          <div class="chart-empty">输入参数后显示轨迹。</div>
+        </div>
+        <div class="legend">
+          <span><i style="background:#34d399"></i>适宜</span>
+          <span><i style="background:#60a5fa"></i>偏低</span>
+          <span><i style="background:#f87171"></i>偏高</span>
+          <span><i style="background:rgba(45,212,191,.26);border:1px solid rgba(45,212,191,.35)"></i>适宜区间</span>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <section class="card detail-card">
+    <div class="detail-head">
+      <div class="head-title">
+        <span class="head-mark"></span>
+        <div>
+          <h2>逐点检查明细</h2>
+          <p>第 1 次检查使用初始矿物；每次检查后扣除“每点消耗矿物”。夜间耗水在全部检查后结算，见上方“夜间水耗”。</p>
+        </div>
+      </div>
+      <div class="detail-meta">
+        <span class="meta-pill">每次消耗 <b id="consumeEcho">0.050 mL</b></span>
+        <span class="meta-pill">污染每点 <b id="pollPerPointEcho">0.00</b></span>
+        <button class="mini-btn" type="button" id="btnCopy">复制摘要</button>
+      </div>
+    </div>
+    <div class="table-shell detail-shell">
+      <table class="detail-table" aria-label="逐点检查明细">
+        <thead>
+          <tr>
+            <th class="num">检查</th>
+            <th class="num">检查前矿物</th>
+            <th class="num">取整浓度</th>
+            <th>状态</th>
+            <th class="num">污染损失</th>
+            <th class="num">矿物损失</th>
+            <th class="num">本点合计</th>
+            <th class="num">剩余健康</th>
+          </tr>
+        </thead>
+        <tbody id="detailBody"></tbody>
+      </table>
+    </div>
+    <div class="scroll-hint">左右滑动表格，查看污染损失、矿物损失与剩余健康 →</div>
+  </section>
+
+  <div class="notes-grid">
+    <section class="card note-card">
+      <h2>计算口径</h2>
+      <ul>
+        <li><b>污染指数：</b><code>成分量 ÷ 当前纯水量 × 10000</code>。例如 1 mL 污染物加入 1000 mL 纯水，浓度为 0.1%，指数为 10。</li>
+        <li><b>取整：</b>调整指数使用四舍五入；六类各自查表后相加，再乘以今晚生长进度。</li>
+        <li><b>作物系数：</b>六类表内损失合计后乘作物污染系数，按 0.01 健康向下截断；填料草、水培芦苇系数为 0，不受六类污染影响。</li>
+        <li><b>矿物：</b>浓度先向下取整到 0.01 个百分点，再与适宜区间比较；上下界都包含。低于下限每点 −1.00，高于上限每点 −0.50。</li>
+        <li><b>边界处理：</b>2.509% 会先变成 2.50%，仍按上限内处理；到 2.51% 才算高于上限。</li>
+        <li><b>顺序：</b>本工具把 1 点生长进度视为一次矿物检查；先扣健康，再消耗矿物。全部检查结束后，才结算夜间水耗。</li>
+        <li><b>水耗：</b>按当前混合液中各成分的占比扣除，水、矿物与污染物一起减少；因此不改变本晚已经结算的健康，只影响结算后的水量与下一晚起始状态。</li>
+        <li><b>健康：</b>最终健康 <code>max(0, 初始健康 − 理论总损失)</code>；归零后不会继续累计。</li>
+      </ul>
+    </section>
+
+    <section class="card note-card">
+      <h2>污染指数对照表</h2>
+      <div class="table-shell">
+        <table class="ref-table" id="refTable" aria-label="调整后污染指数与每点健康损失">
+          <thead>
+            <tr><th>调整后污染指数</th><th>每点进度损失健康</th></tr>
+          </thead>
+          <tbody>
+            <tr data-lo="0" data-hi="10"><td>不高于 10</td><td>0</td></tr>
+            <tr data-lo="11" data-hi="15"><td>11 ～ 15</td><td>0.15</td></tr>
+            <tr data-lo="16" data-hi="20"><td>16 ～ 20</td><td>0.20</td></tr>
+            <tr data-lo="21" data-hi="25"><td>21 ～ 25</td><td>0.30</td></tr>
+            <tr data-lo="26" data-hi="30"><td>26 ～ 30</td><td>0.40</td></tr>
+            <tr data-lo="31" data-hi="40"><td>31 ～ 40</td><td>0.60</td></tr>
+            <tr data-lo="41" data-hi="60"><td>41 ～ 60</td><td>0.80</td></tr>
+            <tr data-lo="61" data-hi="100"><td>61 ～ 100</td><td>1.60</td></tr>
+            <tr data-lo="101" data-hi="200"><td>101 ～ 200</td><td>3.20</td></tr>
+            <tr data-lo="201" data-hi="999999"><td>高于 200</td><td>6.40</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="hint" style="margin-top:9px">当前结算命中的档位会高亮。</div>
+    </section>
+  </div>
+
+  <div class="footer">
+    单文件离线计算器 · 所有输入只在本页处理 · 健康结果保留两位小数
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const POLLUTANTS = [
+    { key: "heavy",   name: "重金属",     sub: "Heavy metals", mark: "重", color: "#fb7185" },
+    { key: "chemical",name: "化学污染物", sub: "Chemicals",    mark: "化", color: "#c084fc" },
+    { key: "microbe", name: "微生物",     sub: "Microbes",     mark: "微", color: "#fbbf24" },
+    { key: "organic", name: "有机废物",   sub: "Organic waste",mark: "有", color: "#34d399" },
+    { key: "acid",    name: "酸",         sub: "Acid",         mark: "酸", color: "#fb923c" },
+    { key: "alkali",  name: "碱",         sub: "Alkali",       mark: "碱", color: "#60a5fa" }
+  ];
+
+  // Loss is stored in hundredths of a health point: 15 = 0.15 health.
+  const INDEX_TABLE = [
+    { lo: 0,   hi: 10,       loss: 0   },
+    { lo: 11,  hi: 15,       loss: 15  },
+    { lo: 16,  hi: 20,       loss: 20  },
+    { lo: 21,  hi: 25,       loss: 30  },
+    { lo: 26,  hi: 30,       loss: 40  },
+    { lo: 31,  hi: 40,       loss: 60  },
+    { lo: 41,  hi: 60,       loss: 80  },
+    { lo: 61,  hi: 100,      loss: 160 },
+    { lo: 101, hi: 200,      loss: 320 },
+    { lo: 201, hi: Infinity, loss: 640 }
+  ];
+
+  const DEFAULTS = {
+    water: 1000,
+    waterUse: 100,
+    sensitivity: 1,
+    growth: 8,
+    health: 100,
+    mineral: 15,
+    consume: 0.05,
+    lower: 0.5,
+    upper: 2.5,
+    pollutants: {
+      heavy: 0,
+      chemical: 0,
+      microbe: 0,
+      organic: 0,
+      acid: 0,
+      alkali: 0
+    }
+  };
+
+  const DEMO = {
+    water: 1000,
+    waterUse: 100,
+    sensitivity: 1.2,
+    growth: 8,
+    health: 100,
+    mineral: 5.2,
+    consume: 0.05,
+    lower: 0.5,
+    upper: 2.5,
+    pollutants: {
+      heavy: 3.2,
+      chemical: 1.4,
+      microbe: 0.9,
+      organic: 0.8,
+      acid: 0.5,
+      alkali: 0.3
+    }
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const pollRefs = new Map();
+  let lastSummary = "";
+
+  const escapeHtml = (value) => String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+  const toNumber = (id, fallback = 0) => {
+    const raw = $(id).value.trim();
+    if (raw === "") return fallback;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : fallback;
+  };
+
+  const toUl = (ml) => Math.max(0, Math.round(ml * 1000));
+  const toHundredths = (pct) => Math.round(pct * 100);
+  const fmt = (n, digits = 2) => Number.isFinite(n) ? n.toFixed(digits) : "—";
+  const fmtHealth = (hundredths) => (hundredths / 100).toFixed(2);
+  const fmtMl = (ul, digits = 3) => (ul / 1000).toFixed(digits);
+  const fmtConc = (hundredths) => (hundredths / 100).toFixed(2) + "%";
+
+  function roundHalfUp(value) {
+    return Math.floor(value + 0.5 + 1e-9);
+  }
+
+  function lossForIndex(index) {
+    for (const row of INDEX_TABLE) {
+      if (index >= row.lo && index <= row.hi) return row.loss;
+    }
+    return 640;
+  }
+
+  function statusOf(concHundredths, lowerHundredths, upperHundredths) {
+    if (concHundredths < lowerHundredths) return "low";
+    if (concHundredths > upperHundredths) return "high";
+    return "ok";
+  }
+
+  function statusLabel(status) {
+    return status === "low" ? "偏低" : status === "high" ? "偏高" : "适宜";
+  }
+
+  // Split a requested removal across components in proportion to their amounts.
+  // Floors each share to whole microlitres, then gives the leftover microlitres
+  // to the largest fractional remainders (ties: larger original amount first).
+  function splitProportionally(amounts, total, used) {
+    const n = amounts.length;
+    const removed = new Array(n).fill(0);
+    if (n === 0 || total <= 0 || used <= 0) return removed;
+    if (used >= total) return amounts.slice();
+
+    const exact = amounts.map((amount) => amount * used);
+    const floors = exact.map((value) => Math.floor(value / total));
+    const remainder = used - floors.reduce((sum, value) => sum + value, 0);
+
+    const order = exact.map((value, index) => ({
+      index,
+      fraction: value % total,
+      amount: amounts[index]
+    })).sort((a, b) =>
+      b.fraction - a.fraction ||
+      b.amount - a.amount ||
+      a.index - b.index
+    );
+
+    for (let i = 0; i < remainder; i++) {
+      floors[order[i % n].index] += 1;
+    }
+    return floors;
+  }
+
+  function computeWaterUse(state, mineralAfterGrowthUl) {
+    const amounts = [
+      state.waterUl,
+      mineralAfterGrowthUl,
+      ...POLLUTANTS.map((p) => state.pollutants[p.key].ul)
+    ];
+    const totalBeforeUl = amounts.reduce((sum, value) => sum + value, 0);
+    const usedUl = Math.min(totalBeforeUl, state.waterUseUl);
+    const removedUl = splitProportionally(amounts, totalBeforeUl, usedUl);
+    const afterUl = amounts.map((amount, index) => amount - removedUl[index]);
+
+    const pollutantBeforeUl = amounts.slice(2).reduce((sum, value) => sum + value, 0);
+    const pollutantRemovedUl = removedUl.slice(2).reduce((sum, value) => sum + value, 0);
+    const pollutantAfterUl = afterUl.slice(2).reduce((sum, value) => sum + value, 0);
+
+    const pollutantParts = POLLUTANTS.map((pollutant, index) => ({
+      key: pollutant.key,
+      name: pollutant.name,
+      beforeUl: amounts[index + 2],
+      removedUl: removedUl[index + 2],
+      afterUl: afterUl[index + 2]
+    }));
+
+    return {
+      requestedUl: state.waterUseUl,
+      usedUl,
+      totalBeforeUl,
+      totalAfterUl: totalBeforeUl - usedUl,
+      ratio: totalBeforeUl > 0 ? usedUl / totalBeforeUl : 0,
+      pureBeforeUl: afterUl[0] + removedUl[0],
+      pureRemovedUl: removedUl[0],
+      pureAfterUl: afterUl[0],
+      mineralBeforeUl: afterUl[1] + removedUl[1],
+      mineralRemovedUl: removedUl[1],
+      mineralAfterUl: afterUl[1],
+      pollutantBeforeUl,
+      pollutantRemovedUl,
+      pollutantAfterUl,
+      pollutantParts
+    };
+  }
+
+  function buildPollutantRows() {
+    const body = $("pollBody");
+    const fragment = document.createDocumentFragment();
+
+    POLLUTANTS.forEach((p) => {
+      const tr = document.createElement("tr");
+      tr.style.setProperty("--c", p.color);
+      tr.innerHTML =
+        '<td>' +
+          '<div class="mat">' +
+            '<span class="mat-icon" aria-hidden="true">' + p.mark + '</span>' +
+            '<span class="mat-text">' +
+              '<span class="mat-name">' + p.name + '</span>' +
+              '<span class="mat-sub">' + p.sub + '</span>' +
+            '</span>' +
+          '</div>' +
+        '</td>' +
+        '<td>' +
+          '<div class="amount-shell">' +
+            '<input type="number" min="0" step="0.001" value="0" inputmode="decimal" ' +
+              'aria-label="' + p.name + '含量（mL）" data-poll="' + p.key + '">' +
+            '<span>mL</span>' +
+          '</div>' +
+        '</td>' +
+        '<td class="num conc">0.0000%</td>' +
+        '<td class="num raw">0.00</td>' +
+        '<td class="num idx">0</td>' +
+        '<td class="num"><span class="loss-badge zero loss">0.00</span></td>';
+
+      fragment.appendChild(tr);
+      pollRefs.set(p.key, {
+        row: tr,
+        input: tr.querySelector("input"),
+        conc: tr.querySelector(".conc"),
+        raw: tr.querySelector(".raw"),
+        idx: tr.querySelector(".idx"),
+        loss: tr.querySelector(".loss")
+      });
+    });
+
+    body.appendChild(fragment);
+  }
+
+  function readState() {
+    const rawWater = $("water").value.trim();
+    const water = toNumber("water", 0);
+    const waterUl = toUl(water);
+
+    const lowerRaw = $("lower").value.trim();
+    const upperRaw = $("upper").value.trim();
+    const lowerPct = lowerRaw === "" ? 0 : Number($("lower").value);
+    const upperPct = upperRaw === "" ? 0 : Number($("upper").value);
+    const lowerH = Number.isFinite(lowerPct) ? toHundredths(lowerPct) : 0;
+    const upperH = Number.isFinite(upperPct) ? toHundredths(upperPct) : 0;
+
+    const growthRaw = Number($("growth").value);
+    const growth = Number.isFinite(growthRaw) ? Math.max(0, Math.min(200, Math.floor(growthRaw))) : 0;
+
+    const healthRaw = Number($("health").value);
+    const healthPct = Number.isFinite(healthRaw) ? Math.max(0, Math.min(100, healthRaw)) : 100;
+    const initialHealthH = Math.round(healthPct * 100);
+
+    const mineralMl = toNumber("mineral", 0);
+    const mineralUl = toUl(mineralMl);
+    const consumeMl = toNumber("consume", 0);
+    const consumeUl = toUl(consumeMl);
+    const waterUseMl = toNumber("waterUse", 0);
+    const waterUseUl = toUl(waterUseMl);
+    const sensitivityRaw = Number($("sensitivity").value);
+    const sensitivity = Number.isFinite(sensitivityRaw) ? Math.max(0, sensitivityRaw) : 0;
+    const cropRaw = Number($("crop").value);
+    const cropCoeff = Number.isFinite(cropRaw) ? Math.max(0, cropRaw) : 0;
+
+    const pollutants = {};
+    POLLUTANTS.forEach((p) => {
+      const ref = pollRefs.get(p.key);
+      const ml = Number(ref.input.value);
+      pollutants[p.key] = {
+        ml: Number.isFinite(ml) ? Math.max(0, ml) : 0,
+        ul: Number.isFinite(ml) ? toUl(Math.max(0, ml)) : 0
+      };
+    });
+
+    const warnings = [];
+    let valid = true;
+
+    if (rawWater === "" || water <= 0 || waterUl <= 0) {
+      valid = false;
+      warnings.push({ text: "当前纯水量必须大于 0 mL。", danger: true });
+    }
+    if (lowerH > upperH) {
+      valid = false;
+      warnings.push({ text: "适宜下限不能高于适宜上限。", danger: true });
+    }
+    if (growthRaw > 200) {
+      warnings.push({ text: "单晚进度超过 200 点，已按 200 点计算。", danger: false });
+    }
+    if (healthRaw > 100) {
+      warnings.push({ text: "初始健康超过 100，已按 100 计算。", danger: false });
+    }
+    if (healthRaw < 0) {
+      warnings.push({ text: "初始健康小于 0，已按 0 计算。", danger: false });
+    }
+
+    return {
+      valid,
+      warnings,
+      water,
+      waterUl,
+      sensitivity,
+      cropCoeff,
+      growth,
+      healthPct,
+      initialHealthH,
+      mineralMl,
+      mineralUl,
+      consumeMl,
+      consumeUl,
+      waterUseMl,
+      waterUseUl,
+      lowerPct: lowerH / 100,
+      upperPct: upperH / 100,
+      lowerH,
+      upperH,
+      pollutants
+    };
+  }
+
+  function compute(state) {
+    const { waterUl, sensitivity, growth, lowerH, upperH, consumeUl, initialHealthH } = state;
+
+    let baseSumPerPointH = 0;
+    let maxAdjusted = 0;
+    let highIndexCount = 0;
+
+    const pollutantRows = POLLUTANTS.map((p) => {
+      const amountUl = state.pollutants[p.key].ul;
+      const rawIndex = waterUl > 0 ? (amountUl / waterUl) * 10000 : 0;
+      const adjusted = Math.max(0, roundHalfUp(rawIndex * sensitivity));
+      const lossH = lossForIndex(adjusted);
+      const concentration = waterUl > 0 ? (amountUl / waterUl) * 100 : 0;
+
+      baseSumPerPointH += lossH;
+      maxAdjusted = Math.max(maxAdjusted, adjusted);
+      if (adjusted > 200) highIndexCount += 1;
+
+      return { ...p, amountUl, rawIndex, adjusted, lossH, concentration };
+    });
+
+    const sumPerPointH = Math.trunc(baseSumPerPointH * state.cropCoeff);
+
+    let mineralUl = state.mineralUl;
+    let healthH = initialHealthH;
+    let lowCount = 0;
+    let okCount = 0;
+    let highCount = 0;
+    let mineralLossH = 0;
+    const checks = [];
+
+    for (let i = 1; i <= growth; i++) {
+      const concH = waterUl > 0 ? Math.floor((mineralUl * 10000) / waterUl) : 0;
+      const status = statusOf(concH, lowerH, upperH);
+      const minLossH = status === "low" ? 100 : status === "high" ? 50 : 0;
+      const healthBeforeH = healthH;
+      const pointTotalH = sumPerPointH + minLossH;
+
+      healthH = Math.max(0, healthH - pointTotalH);
+      mineralLossH += minLossH;
+
+      if (status === "low") lowCount++;
+      else if (status === "high") highCount++;
+      else okCount++;
+
+      checks.push({
+        index: i,
+        mineralBeforeUl: mineralUl,
+        concH,
+        status,
+        minLossH,
+        pollutionLossH: sumPerPointH,
+        pointTotalH,
+        healthBeforeH,
+        healthAfterH: healthH
+      });
+
+      mineralUl = Math.max(0, mineralUl - Math.min(consumeUl, mineralUl));
+    }
+
+    const pollutionLossH = sumPerPointH * growth;
+    const totalLossH = pollutionLossH + mineralLossH;
+    const actualLossH = Math.max(0, initialHealthH - healthH);
+    const overkillH = Math.max(0, totalLossH - actualLossH);
+    const endConcH = waterUl > 0 ? Math.floor((mineralUl * 10000) / waterUl) : 0;
+    const startConcH = waterUl > 0 ? Math.floor((state.mineralUl * 10000) / waterUl) : 0;
+    const water = computeWaterUse(state, mineralUl);
+
+    return {
+      pollutantRows,
+      baseSumPerPointH,
+      sumPerPointH,
+      cropCoeff: state.cropCoeff,
+      pollutionLossH,
+      mineralLossH,
+      totalLossH,
+      actualLossH,
+      overkillH,
+      initialHealthH,
+      finalHealthH: healthH,
+      endConcH,
+      startConcH,
+      endMineralUl: mineralUl,
+      water,
+      checks,
+      lowCount,
+      okCount,
+      highCount,
+      maxAdjusted,
+      highIndexCount
+    };
+  }
+
+  function setBadge(el, text, kind) {
+    el.textContent = text;
+    el.className = "badge " + kind;
+  }
+
+  function renderPollutants(rows) {
+    rows.forEach((row) => {
+      const ref = pollRefs.get(row.key);
+      ref.conc.textContent = row.concentration > 0 ? row.concentration.toFixed(4) + "%" : "0.0000%";
+      ref.raw.textContent = row.rawIndex.toFixed(2);
+      ref.idx.textContent = String(row.adjusted);
+      ref.loss.textContent = fmtHealth(row.lossH);
+      ref.loss.className = "loss-badge loss " + (row.lossH > 0 ? "on" : "zero");
+      ref.row.style.setProperty("--c", row.color);
+    });
+
+    $("sumPerPoint").innerHTML = fmtHealth(rows.reduce((sum, row) => sum + row.lossH, 0)) + ' <small>健康</small>';
+  }
+
+  function renderSummary(state, result) {
+    const finalH = result.finalHealthH;
+    const finalPct = finalH / 100;
+    const initialH = result.initialHealthH;
+
+    $("finalHealth").textContent = finalPct.toFixed(2);
+    $("initialEcho").textContent = (initialH / 100).toFixed(2);
+    $("healthPercent").textContent = finalPct.toFixed(1) + "%";
+    $("actualLoss").innerHTML = fmtHealth(result.actualLossH) + ' <small>健康</small>';
+    $("statPoll").textContent = fmtHealth(result.pollutionLossH);
+    $("statMineral").textContent = fmtHealth(result.mineralLossH);
+    $("statTotal").textContent = fmtHealth(result.totalLossH);
+    $("statMineralEnd").innerHTML = fmtMl(result.endMineralUl, 2) + ' <small>mL</small>';
+    $("statWaterAfter").innerHTML = fmtMl(result.water.pureAfterUl, 2) + ' <small>mL</small>';
+    $("statWaterUse").innerHTML = fmtMl(result.water.usedUl, 2) + ' <small>mL</small>';
+    $("deltaBadge").classList.toggle("zero", result.actualLossH === 0);
+
+    let badgeText = "健康良好";
+    let badgeKind = "good";
+    if (finalH <= 0) {
+      badgeText = "健康归零";
+      badgeKind = "bad";
+    } else if (finalPct < 30) {
+      badgeText = "严重受损";
+      badgeKind = "bad";
+    } else if (finalPct < 60) {
+      badgeText = "明显受损";
+      badgeKind = "bad";
+    } else if (finalPct < 80) {
+      badgeText = "轻度受损";
+      badgeKind = "mid";
+    }
+    setBadge($("healthBadge"), badgeText, badgeKind);
+
+    const fill = $("healthFill");
+    fill.style.width = Math.max(0, Math.min(100, finalPct)) + "%";
+    if (finalPct >= 80) {
+      fill.style.background = "linear-gradient(90deg,#34d399,#2dd4bf)";
+      fill.style.boxShadow = "0 0 12px rgba(45,212,191,.28)";
+    } else if (finalPct >= 50) {
+      fill.style.background = "linear-gradient(90deg,#fbbf24,#f59e0b)";
+      fill.style.boxShadow = "0 0 12px rgba(251,191,36,.24)";
+    } else {
+      fill.style.background = "linear-gradient(90deg,#f87171,#ef4444)";
+      fill.style.boxShadow = "0 0 12px rgba(248,113,113,.24)";
+    }
+
+    $("statPollBox").className = "stat" + (result.pollutionLossH > 0 ? " warn" : "");
+    $("statMineralBox").className = "stat" + (result.mineralLossH > 0 ? " warn" : "");
+    $("statTotalBox").className = "stat" + (result.totalLossH > 0 ? (finalH <= 0 ? " bad" : " warn") : "");
+
+    let note = "";
+    if (state.growth === 0) {
+      note = "生长进度为 0，本晚未发生矿物检查，健康不变。";
+    } else if (result.totalLossH === 0) {
+      note = result.cropCoeff === 0
+        ? "本作物不受六类污染影响，且矿物全程在适宜区间，本晚没有健康损失。"
+        : "这一晚没有健康损失：六类污染调整指数均不高于 10，且矿物全程在适宜区间。";
+    } else {
+      const cropNote = result.cropCoeff === 1 ? "" :
+        "（表内 " + fmtHealth(result.baseSumPerPointH) + " × 系数 " + result.cropCoeff + "）";
+      note = "污染每点 <b>" + fmtHealth(result.sumPerPointH) + "</b>" + cropNote + " × " + state.growth +
+        " 点；矿物检查 " + state.growth + " 次，其中 <b>" + result.lowCount + "</b> 次偏低、" +
+        "<b>" + result.highCount + "</b> 次偏高、" + result.okCount + " 次适宜。";
+      if (result.overkillH > 0) {
+        note += " 健康已归零，理论损失中有 " + fmtHealth(result.overkillH) + " 点不再累计。";
+      }
+    }
+    if (result.water.usedUl > 0) {
+      note += " 健康结算后按比例耗水 <b>" + fmtMl(result.water.usedUl, 3) +
+        " mL</b>，结算后纯水 <b>" + fmtMl(result.water.pureAfterUl, 3) + " mL</b>。";
+    } else {
+      note += " 未设置夜间耗水，结算后水量不变。";
+    }
+    $("summaryNote").innerHTML = note;
+
+    const warnings = state.warnings.slice();
+    if (state.growth === 0) {
+      warnings.push({ text: "生长进度为 0：不会执行任何检查，也不会消耗矿物。", danger: false });
+    }
+    if (result.finalHealthH <= 0 && state.initialHealthH > 0) {
+      warnings.push({ text: "健康已降到 0；后续检查仍会显示理论损失，但健康不会低于 0。", danger: true });
+    }
+    if (result.highIndexCount > 0 && result.cropCoeff > 0) {
+      warnings.push({ text: "有 " + result.highIndexCount + " 类污染的调整指数超过 200，已按最高档 6.40/点计算。", danger: false });
+    }
+    const startStatus = statusOf(result.startConcH, state.lowerH, state.upperH);
+    if (startStatus === "low") {
+      warnings.push({ text: "第 1 次检查时矿物浓度 " + fmtConc(result.startConcH) + " 低于下限 " + state.lowerPct.toFixed(2) + "%，本点会扣 1.00 健康。", danger: false });
+    } else if (startStatus === "high") {
+      warnings.push({ text: "第 1 次检查时矿物浓度 " + fmtConc(result.startConcH) + " 高于上限 " + state.upperPct.toFixed(2) + "%，本点会扣 0.50 健康。", danger: false });
+    }
+    if (state.consumeUl === 0 && state.growth > 0) {
+      warnings.push({ text: "每点矿物消耗为 0：同一晚后续检查的矿物量不会下降。", danger: false });
+    }
+    if (result.water.requestedUl > result.water.totalBeforeUl) {
+      warnings.push({ text: "设置的水耗超过当前总液量，已按全部液体耗尽处理。", danger: true });
+    }
+    if (result.water.totalAfterUl <= 0) {
+      warnings.push({ text: "耗水后液体为 0 mL，下一晚无法开始检查。", danger: true });
+    } else if (result.water.pureAfterUl <= 0) {
+      warnings.push({ text: "耗水后纯水为 0 mL，下一晚无法用当前液体继续计算浓度。", danger: true });
+    }
+
+    const warningBox = $("warnings");
+    if (!warnings.length) {
+      warningBox.innerHTML = "";
+    } else {
+      warningBox.innerHTML = warnings.map((w) =>
+        '<div class="warning' + (w.danger ? " danger" : "") + '">' +
+          '<span class="warn-mark">' + (w.danger ? "!" : "i") + '</span>' +
+          '<span>' + escapeHtml(w.text) + '</span>' +
+        '</div>'
+      ).join("");
+    }
+  }
+
+  function renderWater(state, result) {
+    const w = result.water;
+    $("waterActual").innerHTML = fmtMl(w.usedUl, 3) + ' <small>mL</small>';
+    $("waterRatio").textContent = (w.ratio * 100).toFixed(2) + "%";
+    $("waterAfterTotal").innerHTML = fmtMl(w.totalAfterUl, 3) + ' <small>mL</small>';
+    $("waterAfterPure").innerHTML = fmtMl(w.pureAfterUl, 3) + ' <small>mL</small>';
+
+    const rows = [
+      { name: "纯水", before: w.pureBeforeUl, removed: w.pureRemovedUl, after: w.pureAfterUl },
+      { name: "矿物", before: w.mineralBeforeUl, removed: w.mineralRemovedUl, after: w.mineralAfterUl },
+      { name: "六类污染", before: w.pollutantBeforeUl, removed: w.pollutantRemovedUl, after: w.pollutantAfterUl }
+    ];
+
+    let html = rows.map((row) =>
+      "<tr>" +
+        "<td>" + row.name + "</td>" +
+        '<td class="num">' + fmtMl(row.before, 3) + "</td>" +
+        '<td class="num">' + fmtMl(row.removed, 3) + "</td>" +
+        '<td class="num">' + fmtMl(row.after, 3) + "</td>" +
+      "</tr>"
+    ).join("");
+
+    html += '<tr class="total-row">' +
+      "<td>合计</td>" +
+      '<td class="num">' + fmtMl(w.totalBeforeUl, 3) + "</td>" +
+      '<td class="num">' + fmtMl(w.usedUl, 3) + "</td>" +
+      '<td class="num">' + fmtMl(w.totalAfterUl, 3) + "</td>" +
+    "</tr>";
+
+    $("waterBody").innerHTML = html;
+
+    $("waterPollList").innerHTML = w.pollutantParts.map((part) =>
+      '<div class="water-poll-item"><span>' + part.name + '</span><b>' + fmtMl(part.afterUl, 3) + " mL</b></div>"
+    ).join("");
+  }
+
+  function renderChart(state, result) {
+    const box = $("chartBox");
+    const rows = result.checks;
+    $("chartBadge").textContent = rows.length + " 次检查";
+
+    if (!rows.length) {
+      box.innerHTML = '<div class="chart-empty">生长进度为 0，本晚没有检查点。<br>把“今晚生长进度”调到 1 以上即可查看轨迹。</div>';
+      return;
+    }
+
+    const W = 720;
+    const H = 238;
+    const padL = 50;
+    const padR = 22;
+    const padT = 20;
+    const padB = 35;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+
+    const lower = state.lowerH / 100;
+    const upper = state.upperH / 100;
+    const values = rows.map((r) => r.concH / 100);
+
+    let minV = Math.min(lower, ...values);
+    let maxV = Math.max(upper, ...values);
+    if (maxV - minV < 0.02) {
+      minV = Math.max(0, minV - 0.01);
+      maxV += 0.01;
+    }
+    const pad = Math.max(0.04, (maxV - minV) * 0.14);
+    const yMin = Math.max(0, minV - pad);
+    const yMax = maxV + pad;
+
+    const xOf = (i) => rows.length === 1
+      ? padL + plotW / 2
+      : padL + (i / (rows.length - 1)) * plotW;
+    const yOf = (v) => padT + ((yMax - v) / (yMax - yMin || 1)) * plotH;
+
+    const yUpper = yOf(upper);
+    const yLower = yOf(lower);
+    const bandTop = Math.min(yUpper, yLower);
+    const bandHeight = Math.max(1, Math.abs(yLower - yUpper));
+
+    const path = rows.map((r, i) => (i === 0 ? "M" : "L") + " " + xOf(i).toFixed(2) + " " + yOf(r.concH / 100).toFixed(2)).join(" ");
+
+    const dots = rows.map((r, i) => {
+      const color = r.status === "low" ? "#60a5fa" : r.status === "high" ? "#f87171" : "#34d399";
+      const radius = rows.length > 60 ? 3 : rows.length > 24 ? 4 : 5.5;
+      return '<circle cx="' + xOf(i).toFixed(2) + '" cy="' + yOf(r.concH / 100).toFixed(2) +
+        '" r="' + radius + '" fill="' + color + '" stroke="#0d1728" stroke-width="1.5"></circle>';
+    }).join("");
+
+    const gridCount = 3;
+    let grid = "";
+    for (let i = 0; i <= gridCount; i++) {
+      const v = yMin + ((yMax - yMin) * i) / gridCount;
+      const y = yOf(v);
+      grid += '<line x1="' + padL + '" y1="' + y.toFixed(2) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(2) +
+        '" stroke="rgba(148,163,184,.10)" stroke-width="1"></line>';
+      grid += '<text class="chart-tick" x="' + (padL - 9) + '" y="' + (y + 3.5).toFixed(2) + '" text-anchor="end">' +
+        v.toFixed(2) + '%</text>';
+    }
+
+    const firstLabel = "1";
+    const lastLabel = String(rows.length);
+    const midIndex = Math.floor((rows.length - 1) / 2);
+    const midLabel = rows.length > 2 ? String(midIndex + 1) : "";
+    const xLabels =
+      '<text class="chart-axis" x="' + padL + '" y="' + (H - 12) + '" text-anchor="middle">' + firstLabel + '</text>' +
+      (midLabel ? '<text class="chart-axis" x="' + xOf(midIndex).toFixed(2) + '" y="' + (H - 12) + '" text-anchor="middle">' + midLabel + '</text>' : "") +
+      '<text class="chart-axis" x="' + (W - padR) + '" y="' + (H - 12) + '" text-anchor="middle">' + lastLabel + '</text>' +
+      '<text class="chart-axis" x="' + (padL + plotW / 2) + '" y="' + (H - 1) + '" text-anchor="middle">检查点</text>';
+
+    const upperLabel = '<text class="chart-band-label" x="' + (W - padR) + '" y="' + (yUpper - 5).toFixed(2) + '" text-anchor="end">上限 ' + upper.toFixed(2) + '%</text>';
+    const lowerLabel = '<text class="chart-band-label" x="' + (W - padR) + '" y="' + (yLower + 12).toFixed(2) + '" text-anchor="end">下限 ' + lower.toFixed(2) + '%</text>';
+
+    box.innerHTML =
+      '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="矿物浓度逐点轨迹">' +
+        '<defs>' +
+          '<linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">' +
+            '<stop offset="0%" stop-color="#5eead4"></stop>' +
+            '<stop offset="100%" stop-color="#60a5fa"></stop>' +
+          '</linearGradient>' +
+          '<linearGradient id="bandGradient" x1="0" y1="0" x2="0" y2="1">' +
+            '<stop offset="0%" stop-color="rgba(45,212,191,.04)"></stop>' +
+            '<stop offset="100%" stop-color="rgba(45,212,191,.12)"></stop>' +
+          '</linearGradient>' +
+        '</defs>' +
+        '<rect x="' + padL + '" y="' + padT + '" width="' + plotW + '" height="' + plotH + '" fill="rgba(8,17,31,.34)" rx="7"></rect>' +
+        grid +
+        '<rect x="' + padL + '" y="' + bandTop.toFixed(2) + '" width="' + plotW + '" height="' + bandHeight.toFixed(2) +
+          '" fill="url(#bandGradient)" stroke="rgba(45,212,191,.22)" stroke-dasharray="4 4"></rect>' +
+        '<line x1="' + padL + '" y1="' + yUpper.toFixed(2) + '" x2="' + (W - padR) + '" y2="' + yUpper.toFixed(2) +
+          '" stroke="rgba(94,234,212,.26)" stroke-width="1"></line>' +
+        '<line x1="' + padL + '" y1="' + yLower.toFixed(2) + '" x2="' + (W - padR) + '" y2="' + yLower.toFixed(2) +
+          '" stroke="rgba(94,234,212,.26)" stroke-width="1"></line>' +
+        '<path d="' + path + '" fill="none" stroke="url(#lineGradient)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>' +
+        dots +
+        upperLabel +
+        lowerLabel +
+        xLabels +
+      '</svg>';
+  }
+
+  function renderDetails(state, result) {
+    const body = $("detailBody");
+    $("consumeEcho").textContent = fmt(state.consumeMl, 3) + " mL";
+    $("pollPerPointEcho").textContent = fmtHealth(result.sumPerPointH);
+
+    if (!result.checks.length) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="8">没有检查点。把“今晚生长进度”设为 1 或更大。</td></tr>';
+      return;
+    }
+
+    let html = result.checks.map((check) => {
+      const statusClass = check.status;
+      return '<tr>' +
+        '<td class="num">' + check.index + '</td>' +
+        '<td class="num">' + fmtMl(check.mineralBeforeUl, 3) + ' mL</td>' +
+        '<td class="num ' + (statusClass === "ok" ? "" : statusClass) + '">' + fmtConc(check.concH) + '</td>' +
+        '<td><span class="mini-status ' + statusClass + '"><i></i>' + statusLabel(statusClass) + '</span></td>' +
+        '<td class="num">' + fmtHealth(check.pollutionLossH) + '</td>' +
+        '<td class="num">' + fmtHealth(check.minLossH) + '</td>' +
+        '<td class="num">' + fmtHealth(check.pointTotalH) + '</td>' +
+        '<td class="num">' + fmtHealth(check.healthAfterH) + '</td>' +
+      '</tr>';
+    }).join("");
+
+    html += '<tr class="total-row">' +
+      '<td colspan="4">整晚合计</td>' +
+      '<td class="num">' + fmtHealth(result.pollutionLossH) + '</td>' +
+      '<td class="num">' + fmtHealth(result.mineralLossH) + '</td>' +
+      '<td class="num">' + fmtHealth(result.totalLossH) + '</td>' +
+      '<td class="num">' + fmtHealth(result.finalHealthH) + '</td>' +
+    '</tr>';
+
+    body.innerHTML = html;
+  }
+
+  function renderRefTable(rows) {
+    const tableRows = $("refTable").querySelectorAll("tbody tr");
+    tableRows.forEach((tr) => {
+      const lo = Number(tr.dataset.lo);
+      const hi = Number(tr.dataset.hi);
+      const hit = rows.some((row) => row.adjusted >= lo && row.adjusted <= hi);
+      tr.classList.toggle("active", hit);
+    });
+  }
+
+  function renderInvalid(state) {
+    lastSummary = "";
+    $("finalHealth").textContent = "—";
+    $("healthBadge").textContent = "参数待修正";
+    $("healthBadge").className = "badge bad";
+    $("actualLoss").innerHTML = "—";
+    $("deltaBadge").classList.remove("zero");
+    $("initialEcho").textContent = "—";
+    $("statPoll").textContent = "—";
+    $("statMineral").textContent = "—";
+    $("statTotal").textContent = "—";
+    $("statMineralEnd").textContent = "—";
+    $("statWaterAfter").textContent = "—";
+    $("statWaterUse").textContent = "—";
+    $("statPollBox").className = "stat";
+    $("statMineralBox").className = "stat";
+    $("statTotalBox").className = "stat";
+    $("healthFill").style.width = "0%";
+    $("healthPercent").textContent = "—";
+    $("summaryNote").textContent = "请先修正左侧标红的参数。";
+    $("warnings").innerHTML = state.warnings.map((w) =>
+      '<div class="warning' + (w.danger ? " danger" : "") + '">' +
+        '<span class="warn-mark">!</span><span>' + escapeHtml(w.text) + '</span>' +
+      '</div>'
+    ).join("");
+    $("chartBox").innerHTML = '<div class="chart-empty">参数有效后显示矿物浓度轨迹。</div>';
+    $("detailBody").innerHTML = '<tr class="empty-row"><td colspan="8">参数有效后才能逐点结算。</td></tr>';
+    $("sumPerPoint").innerHTML = "—";
+    $("effectivePerPoint").textContent = "—";
+    $("pollTotal").innerHTML = "—";
+    $("growthEcho").innerHTML = "—";
+    $("startConc").textContent = "—";
+    $("endMineral").textContent = "—";
+    $("consumeTotal").textContent = "—";
+    $("consumeEcho").textContent = "—";
+    $("pollPerPointEcho").textContent = "—";
+    $("chartBadge").textContent = "—";
+    $("waterActual").textContent = "—";
+    $("waterRatio").textContent = "—";
+    $("waterAfterTotal").textContent = "—";
+    $("waterAfterPure").textContent = "—";
+    $("waterBody").innerHTML = '<tr class="empty-row"><td colspan="4">参数有效后才能计算夜间水耗。</td></tr>';
+    $("waterPollList").innerHTML = "";
+    POLLUTANTS.forEach((p) => {
+      const ref = pollRefs.get(p.key);
+      ref.conc.textContent = "—";
+      ref.raw.textContent = "—";
+      ref.idx.textContent = "—";
+      ref.loss.textContent = "—";
+      ref.loss.className = "loss-badge loss zero";
+    });
+    $("refTable").querySelectorAll("tbody tr").forEach((tr) => tr.classList.remove("active"));
+  }
+
+  function recalc() {
+    const state = readState();
+    if (!state.valid) {
+      renderInvalid(state);
+      return;
+    }
+
+    const result = compute(state);
+
+    // Top / side numbers
+    $("growthEcho").innerHTML = state.growth + ' <small>点</small>';
+    $("effectivePerPoint").textContent = fmtHealth(result.sumPerPointH);
+    $("pollTotal").innerHTML = fmtHealth(result.pollutionLossH) + ' <small>健康</small>';
+    $("startConc").textContent = fmtConc(result.startConcH);
+    $("endMineral").innerHTML = fmtMl(result.endMineralUl, 3) + ' <small>mL</small>';
+    $("consumeTotal").textContent = fmt((state.mineralUl - result.endMineralUl) / 1000, 3);
+    $("statMineralEnd").innerHTML = fmtMl(result.endMineralUl, 2) + ' <small>mL</small>';
+
+    // Keep a small status cue on the starting concentration.
+    const startStatus = statusOf(result.startConcH, state.lowerH, state.upperH);
+    $("startConc").innerHTML =
+      '<span class="status-dot ' + startStatus + '"></span>' + fmtConc(result.startConcH);
+
+    renderPollutants(result.pollutantRows);
+    renderSummary(state, result);
+    renderWater(state, result);
+    renderChart(state, result);
+    renderDetails(state, result);
+    renderRefTable(result.pollutantRows);
+
+    lastSummary =
+      "水培健康度计算器｜今晚结算\n" +
+      "初始健康：" + (result.initialHealthH / 100).toFixed(2) + " → 最终健康：" + (result.finalHealthH / 100).toFixed(2) + "\n" +
+      "污染损失：" + fmtHealth(result.pollutionLossH) + "（表内 " + fmtHealth(result.baseSumPerPointH) +
+        " × 作物系数 " + result.cropCoeff + " → 实际每点 " + fmtHealth(result.sumPerPointH) +
+        " × " + state.growth + " 点）\n" +
+      "矿物损失：" + fmtHealth(result.mineralLossH) + "（偏低 " + result.lowCount + " 次，偏高 " + result.highCount + " 次，适宜 " + result.okCount + " 次）\n" +
+      "理论总损失：" + fmtHealth(result.totalLossH) + "；实际扣除：" + fmtHealth(result.actualLossH) + "\n" +
+      "生长后矿物：" + fmtMl(result.endMineralUl, 3) + " mL（" + fmtConc(result.endConcH) + "）\n" +
+      "夜间耗水：" + fmtMl(result.water.usedUl, 3) + " mL（比例 " + (result.water.ratio * 100).toFixed(2) + "%）；" +
+      "耗水后纯水：" + fmtMl(result.water.pureAfterUl, 3) + " mL，矿物：" + fmtMl(result.water.mineralAfterUl, 3) +
+      " mL，污染物：" + fmtMl(result.water.pollutantAfterUl, 3) + " mL\n" +
+      "耗水后各污染物：" + result.water.pollutantParts.map((part) =>
+        part.name + " " + fmtMl(part.afterUl, 3) + " mL"
+      ).join("，") + "\n" +
+      "参数：纯水 " + state.water + " mL，每晚水耗 " + state.waterUseMl + " mL，敏感度 " + state.sensitivity + "，区间 " + state.lowerPct.toFixed(2) + "%–" + state.upperPct.toFixed(2) + "%";
+  }
+
+  function setValue(id, value) {
+    $(id).value = value;
+  }
+
+  function resetToDefaults() {
+    setValue("water", DEFAULTS.water);
+    setValue("waterUse", DEFAULTS.waterUse);
+    setValue("sensitivity", DEFAULTS.sensitivity);
+    setValue("crop", 1);
+    setValue("growth", DEFAULTS.growth);
+    setValue("health", DEFAULTS.health);
+    setValue("mineral", DEFAULTS.mineral);
+    setValue("consume", DEFAULTS.consume);
+    setValue("lower", DEFAULTS.lower);
+    setValue("upper", DEFAULTS.upper);
+    POLLUTANTS.forEach((p) => {
+      pollRefs.get(p.key).input.value = DEFAULTS.pollutants[p.key];
+    });
+    recalc();
+  }
+
+  function loadDemo() {
+    setValue("water", DEMO.water);
+    setValue("waterUse", DEMO.waterUse);
+    setValue("sensitivity", DEMO.sensitivity);
+    setValue("crop", 1);
+    setValue("growth", DEMO.growth);
+    setValue("health", DEMO.health);
+    setValue("mineral", DEMO.mineral);
+    setValue("consume", DEMO.consume);
+    setValue("lower", DEMO.lower);
+    setValue("upper", DEMO.upper);
+    POLLUTANTS.forEach((p) => {
+      pollRefs.get(p.key).input.value = DEMO.pollutants[p.key];
+    });
+    recalc();
+    showToast("已填入示例数据");
+  }
+
+  let toastTimer = null;
+  function showToast(message) {
+    const toast = $("toast");
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 1800);
+  }
+
+  async function copySummary() {
+    if (!lastSummary) {
+      showToast("还没有可复制的结算结果");
+      return;
+    }
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(lastSummary);
+      } else {
+        const area = document.createElement("textarea");
+        area.value = lastSummary;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand("copy");
+        area.remove();
+      }
+      showToast("结算摘要已复制");
+    } catch (err) {
+      showToast("复制失败，请手动选择结果文本");
+    }
+  }
+
+  function init() {
+    buildPollutantRows();
+    document.querySelectorAll("input").forEach((input) => {
+      input.addEventListener("input", recalc);
+    });
+    $("crop").addEventListener("change", recalc);
+    $("btnReset").addEventListener("click", resetToDefaults);
+    $("btnDemo").addEventListener("click", loadDemo);
+    $("btnCopy").addEventListener("click", copySummary);
+    recalc();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
