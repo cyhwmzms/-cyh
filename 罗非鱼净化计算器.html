@@ -32,9 +32,19 @@
   table{width:100%;border-collapse:collapse;font-size:13px}
   th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left}
   th{background:#0a1220;color:#cbd5e1;font-size:12px;font-weight:600}
+  th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .hint a{color:var(--accent);text-decoration:none;border-bottom:1px dashed currentColor}
+  .hint a:hover{color:#5eead4}
+  .growth-card{scroll-margin-top:16px}
   tr:nth-child(even) td{background:#16213a}
   td.num{font-variant-numeric:tabular-nums;text-align:right}
   .note{font-size:12px;color:var(--muted);line-height:1.85}
+  .tips{font-size:12.5px;color:var(--muted);line-height:1.8}
+  .tips .tips-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px;letter-spacing:.02em}
+  .tips ol{margin:0;padding-left:20px}
+  .tips li{margin:5px 0}
+  .tips li::marker{color:var(--accent);font-weight:700}
+  .tips b{color:#e2e8f0;font-weight:700}
   code{background:#0b1424;padding:1px 5px;border-radius:4px;font-size:12px;color:#a5f3fc}
 
   /* 本页阅读统计（Vercount，兼容不蒜子标签 id） */
@@ -70,21 +80,36 @@
     每夜顺序：<b>① 排污（水 → 有机废物）　② 矿化（有机废物 + 酸/碱 → 矿物）　③ 吸收（重金属 / 化学 / 物理）</b>
   </div>
 
+  <div class="card tips">
+    <div class="tips-title">注意事项</div>
+    <ol>
+      <li>净化期间可以正常喂食，喂食后鱼会排出有机废物；<b>不要装滤水器、高级滤水器</b>，它们会把有机废物转化成水。</li>
+      <li>鱼转化污染物有一个最小值，最小值与纯水的比例正相关；所以尽量让水含量接近「排污 / 吸收预算」，就能完全净化。</li>
+      <li>示例：一条 <b>600 g</b> 的鱼可以吃 <b>3 mL</b> 污染物，那么往浴缸里滴 <b>3.1 mL</b> 的水就可以完全净化化学污染物、重金属；数值太小会自动湮灭。</li>
+      <li>微生物可以用化学药片净化；物理污染物、矿物质、有机废物用滤水器净化。化学药片可以把化学污染提前降到 <b>0.7%</b>，减少鱼前期净化的时间。</li>
+      <li>鱼本身有一个总的液体需求，杂质与水都算在里面，所以提纯物过少没法提纯；推荐至少让「杂质 + 水 + 提纯物」达到 <b>1000 mL</b> 再过滤。</li>
+    </ol>
+  </div>
+
   <div class="card">
     <div class="grid">
-      <div><label>水（mL）</label><input id="water" type="number" value="8.96" min="0" step="0.01"></div>
-      <div><label>重金属（mL）</label><input id="heavy" type="number" value="9.44" min="0" step="0.01"></div>
-      <div><label>化学污染物（mL）</label><input id="chem" type="number" value="17.08" min="0" step="0.01"></div>
-      <div><label>物理污染物（mL）</label><input id="phys" type="number" value="0.041" min="0" step="0.001"></div>
-      <div><label>有机废物（mL）</label><input id="org" type="number" value="0" min="0" step="0.01"></div>
-      <div><label>矿物（mL）</label><input id="mineral" type="number" value="1.65" min="0" step="0.01"></div>
+      <div><label>水（mL）</label><input id="water" type="number" placeholder="0" min="0" step="0.01"></div>
+      <div><label>重金属（mL）</label><input id="heavy" type="number" placeholder="0" min="0" step="0.01"></div>
+      <div><label>化学污染物（mL）</label><input id="chem" type="number" placeholder="0" min="0" step="0.01"></div>
+      <div><label>物理污染物（mL）</label><input id="phys" type="number" placeholder="0" min="0" step="0.001"></div>
+      <div><label>有机废物（mL）</label><input id="org" type="number" placeholder="0" min="0" step="0.01"></div>
+      <div><label>矿物（mL）</label><input id="mineral" type="number" placeholder="0" min="0" step="0.01"></div>
       <div>
         <label>酸 / 碱</label>
         <select id="kind"><option value="酸" selected>酸</option><option value="碱">碱</option></select>
       </div>
-      <div><label>酸 / 碱 量（mL）</label><input id="ab" type="number" value="2360" min="0" step="0.01"></div>
-      <div><label>鱼总重（克）</label><input id="fish" type="number" value="1726" min="0" step="1"></div>
-      <div><label>结算夜数</label><input id="nights" type="number" value="1" min="1" max="60" step="1"></div>
+      <div><label>酸 / 碱 量（mL）</label><input id="ab" type="number" placeholder="0" min="0" step="0.01"></div>
+      <div>
+        <label>鱼总重（克）</label>
+        <input id="fish" type="number" placeholder="0" min="0" step="1">
+        <div class="hint">沟渠鱼重量要取多一天。<br><a href="#growthTable">点击此处</a>跳转至体重增长表格</div>
+      </div>
+      <div><label>结算夜数</label><input id="nights" type="number" placeholder="1" min="1" max="60" step="1"></div>
     </div>
   </div>
 
@@ -121,6 +146,21 @@
     · 吸收：<code>B = 鱼重 ÷ 100 × 0.5 mL</code>，重金属 / 化学 / 物理各一次，受底线 <code>纯水 × 指数 ÷ 10000</code> 限制（25 / 16 / 7）；纯水为 0 时不工作。
   </div>
 
+  <div class="card growth-card" id="growthTable">
+    <h2 style="font-size:15px;margin:0 0 10px">体重增长</h2>
+    <table>
+      <thead>
+        <tr><th>区间</th><th class="num">增重</th><th class="num">平均</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>小鱼 → 中鱼</td><td class="num">50 → 200 g</td><td class="num">50 g/天</td></tr>
+        <tr><td>中鱼 → 大鱼</td><td class="num">200 → 450 g</td><td class="num">62.5 g/天</td></tr>
+        <tr><td>大鱼 → 成鱼</td><td class="num">450 → 600 g</td><td class="num">25 g/天</td></tr>
+        <tr><td>老鱼 → 死鱼</td><td class="num">600 → 606 g</td><td class="num">6 g/天</td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <div class="bsz-line" aria-label="本页阅读统计">
     <span>本页阅读量 <b id="busuanzi_value_page_pv">—</b> 次</span>
     <span>本页访客数 <b id="busuanzi_value_page_uv">—</b> 人</span>
@@ -133,6 +173,16 @@ const toUl = ml => Math.round(ml * 1000);
 const toMl = ul => ul / 1000;
 
 function calc(){
+  const inputIds = ["water","heavy","chem","phys","org","mineral","ab","fish"];
+  const hasInput = inputIds.some(id => String(document.getElementById(id).value).trim() !== "");
+  if (!hasInput){
+    document.getElementById("outPurity").textContent = "—";
+    ["stStart","stB","stMin","stOrg"].forEach(id => { document.getElementById(id).textContent = "—"; });
+    document.querySelector("#tbl tbody").innerHTML = '<tr><td colspan="4" style="color:var(--muted)">填入上方数值后显示</td></tr>';
+    document.querySelector("#tblN tbody").innerHTML = '<tr><td colspan="6" style="color:var(--muted)">填入上方数值后显示</td></tr>';
+    return;
+  }
+
   const w0 = toUl(Math.max(0, Number(document.getElementById("water").value) || 0));
   const h0 = toUl(Math.max(0, Number(document.getElementById("heavy").value) || 0));
   const c0 = toUl(Math.max(0, Number(document.getElementById("chem").value) || 0));
@@ -213,8 +263,8 @@ function calc(){
   }
 
   const p1 = purityOf(s);
-  document.getElementById("outPurity").textContent = (p1 / 100).toFixed(2) + "%";
-  document.getElementById("stStart").textContent = (p0v / 100).toFixed(2) + "%";
+  document.getElementById("outPurity").textContent = p1.toFixed(2) + "%";
+  document.getElementById("stStart").textContent = p0v.toFixed(2) + "%";
   document.getElementById("stB").textContent = toMl(waste).toFixed(2) + " mL";
   document.getElementById("stMin").textContent = toMl(start.mineral).toFixed(2) + " → " + toMl(s.mineral).toFixed(2) + " mL";
   document.getElementById("stOrg").textContent = toMl(start.org).toFixed(2) + " → " + toMl(s.org).toFixed(2) + " mL";
@@ -236,7 +286,7 @@ function calc(){
   hist.forEach(h => {
     const tr = document.createElement("tr");
     tr.innerHTML =
-      "<td class='num'>" + h.n + "</td>" +
+      "<td>" + h.n + "</td>" +
       "<td class='num'>" + toMl(h.w).toFixed(2) + "</td>" +
       "<td class='num'>" + toMl(h.h).toFixed(2) + "</td>" +
       "<td class='num'>" + toMl(h.c).toFixed(2) + "</td>" +
