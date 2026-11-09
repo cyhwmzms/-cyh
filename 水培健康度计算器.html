@@ -479,10 +479,23 @@
     font-size:14px;font-weight:700;color:var(--ink,#e8eef8);
     font-variant-numeric:tabular-nums;margin:0 2px;
   }
+
+  /* 返回首页 */
+  .back-home{
+    display:inline-flex;align-items:center;gap:6px;
+    margin:0 0 14px;padding:4px 12px;
+    font-size:12px;line-height:1.7;text-decoration:none;
+    color:var(--muted,#92a4bd);
+    border:1px solid var(--line,#26344a);border-radius:999px;
+    transition:color .18s ease,border-color .18s ease;
+  }
+  .back-home:hover{color:var(--ink,#e8eef8);border-color:var(--accent,#2dd4bf)}
+  .back-home:focus-visible{outline:2px solid var(--accent,#2dd4bf);outline-offset:2px}
 </style>
 </head>
 <body>
 <div class="page">
+  <a class="back-home" href="index.html">← 返回首页</a>
   <header class="hero">
     <div class="hero-copy">
       <div class="eyebrow"><span class="pulse"></span>Hydroponic Health Lab</div>

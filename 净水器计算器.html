@@ -72,10 +72,23 @@
     font-size:14px;font-weight:700;color:var(--ink,#e6edf7);
     font-variant-numeric:tabular-nums;margin:0 2px;
   }
+
+  /* 返回首页 */
+  .back-home{
+    display:inline-flex;align-items:center;gap:6px;
+    margin:0 0 14px;padding:4px 12px;
+    font-size:12px;line-height:1.7;text-decoration:none;
+    color:var(--muted,#8fa1bb);
+    border:1px solid var(--line,#26344a);border-radius:999px;
+    transition:color .18s ease,border-color .18s ease;
+  }
+  .back-home:hover{color:var(--ink,#e6edf7);border-color:var(--accent,#fb923c)}
+  .back-home:focus-visible{outline:2px solid var(--accent,#fb923c);outline-offset:2px}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <a class="back-home" href="index.html">← 返回首页</a>
   <h1>净水器计算器</h1>
   <div class="sub">输入纯度和水量，算出一晚（或多晚）之后的水质。逻辑来自 <code>MachinePurifier.PurifyContainer</code>。</div>
 

@@ -47,10 +47,23 @@
     font-size:14px;font-weight:700;color:var(--ink,#e6edf7);
     font-variant-numeric:tabular-nums;margin:0 2px;
   }
+
+  /* 返回首页 */
+  .back-home{
+    display:inline-flex;align-items:center;gap:6px;
+    margin:0 0 14px;padding:4px 12px;
+    font-size:12px;line-height:1.7;text-decoration:none;
+    color:var(--muted,#8fa1bb);
+    border:1px solid var(--line,#26344a);border-radius:999px;
+    transition:color .18s ease,border-color .18s ease;
+  }
+  .back-home:hover{color:var(--ink,#e6edf7);border-color:var(--accent,#2dd4bf)}
+  .back-home:focus-visible{outline:2px solid var(--accent,#2dd4bf);outline-offset:2px}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <a class="back-home" href="index.html">← 返回首页</a>
   <h1>净化方案对比 · 到 99.9% 要几天</h1>
   <div class="sub">
     输入当前水占比，下面按“预处理只做一次、之后每天芦苇净化一次”计算各方案需要几天。<br>
