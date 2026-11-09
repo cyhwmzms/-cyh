@@ -152,6 +152,32 @@
     border-radius:4px;
     padding:1px 5px;
   }
+  footer .hint{margin:0}
+
+  .stats{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:8px 26px;
+    margin:0 0 12px;
+    padding-bottom:12px;
+    border-bottom:1px dashed var(--line);
+  }
+  .stats .stat{
+    display:inline-flex;
+    align-items:baseline;
+    gap:8px;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .stats .stat-num{
+    font-size:15px;
+    font-weight:600;
+    color:var(--ink);
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-.01em;
+    line-height:1.2;
+  }
 
   @media (max-width:560px){
     body{padding:36px 16px 56px}
@@ -217,9 +243,22 @@
   </main>
 
   <footer>
-    新增页面时，把 HTML 文件放进本目录，并在 <code>index.html</code> 中追加一张卡片。
+    <div class="stats" aria-label="站点统计">
+      <span class="stat" id="busuanzi_container_site_pv">
+        <span>全站总访问量</span>
+        <span class="stat-num" id="busuanzi_value_site_pv">—</span>
+      </span>
+      <span class="stat" id="busuanzi_container_site_uv">
+        <span>全站总访客数</span>
+        <span class="stat-num" id="busuanzi_value_site_uv">—</span>
+      </span>
+    </div>
+    <p class="hint">新增页面时，把 HTML 文件放进本目录，并在 <code>index.html</code> 中追加一张卡片。</p>
   </footer>
 
 </div>
+
+<!-- 不蒜子计数：全站总访问量（PV）/ 全站总访客数（UV） -->
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 </body>
 </html>
