@@ -467,6 +467,18 @@
     .table-shell{background:#fff}
     th{background:#eee;color:#111}
   }
+
+  /* 本页阅读统计（Vercount，兼容不蒜子标签 id） */
+  .bsz-line{
+    display:flex;flex-wrap:wrap;justify-content:center;gap:4px 20px;
+    margin:26px auto 0;padding-top:16px;max-width:640px;
+    border-top:1px dashed var(--line,#26344a);
+    font-size:12px;color:var(--muted,#92a4bd);
+  }
+  .bsz-line b{
+    font-size:14px;font-weight:700;color:var(--ink,#e8eef8);
+    font-variant-numeric:tabular-nums;margin:0 2px;
+  }
 </style>
 </head>
 <body>
@@ -909,6 +921,11 @@
       </div>
       <div class="hint" style="margin-top:9px">当前结算命中的档位会高亮。</div>
     </section>
+  </div>
+
+  <div class="bsz-line" aria-label="本页阅读统计">
+    <span>本页阅读量 <b id="busuanzi_value_page_pv">—</b> 次</span>
+    <span>本页访客数 <b id="busuanzi_value_page_uv">—</b> 人</span>
   </div>
 
   <div class="footer">
@@ -1833,5 +1850,7 @@
   init();
 })();
 </script>
+
+<script defer src="https://events.vercount.one/js"></script>
 </body>
 </html>

@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
 <title>深空当铺 · 净水器计算器</title>
 <style>
   :root{
-    --ink:#111827; --muted:#6b7280; --line:#e2e8f0;
-    --bg:#f1f5f9; --card:#ffffff; --accent:#c2410c; --accent-bg:#fff1e6;
-    --blue:#2563eb; --green:#059669;
+    color-scheme:dark;
+    --ink:#e6edf7; --muted:#8fa1bb; --line:#26344a;
+    --bg:#0b1120; --card:#111a2e; --accent:#fb923c; --accent-bg:rgba(251,146,60,.15);
+    --blue:#60a5fa; --green:#34d399;
   }
   *{box-sizing:border-box}
   body{
@@ -28,7 +30,7 @@
   label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
   input[type=number]{
     width:100%;padding:10px 12px;font-size:16px;border:1px solid var(--line);
-    border-radius:9px;background:#fbfdff;color:var(--ink);outline:none;
+    border-radius:9px;background:#0b1424;color:var(--ink);outline:none;
   }
   input[type=number]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
   .hint{font-size:12px;color:var(--muted);margin-top:5px}
@@ -42,20 +44,34 @@
   .delta b{color:var(--green)}
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
   @media(max-width:640px){.stats{grid-template-columns:1fr 1fr}}
-  .stat{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .stat{background:#0f1a2d;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
   .stat .k{font-size:12px;color:var(--muted)}
   .stat .v{font-size:18px;font-weight:700;margin-top:2px}
   table{width:100%;border-collapse:collapse;font-size:14px}
   th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}
-  th{background:#1e293b;color:#fff;font-weight:600;font-size:13px}
-  tr:nth-child(even) td{background:#f8fafc}
+  th{background:#0a1220;color:#cbd5e1;font-weight:600;font-size:13px}
+  tr:nth-child(even) td{background:#16213a}
   td.num{font-variant-numeric:tabular-nums}
-  tr.hl td{background:#fff1e6 !important;color:#c2410c;font-weight:700}
+  tr.hl td{background:#3b2413 !important;color:#fdba74;font-weight:700}
   h2{font-size:16px;margin:0 0 12px}
   .note{font-size:12px;color:var(--muted);line-height:1.7}
+  code{background:#0b1424;padding:1px 5px;border-radius:4px;font-size:12px;color:#a5f3fc;
+    font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
   .scroll{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px}
   .scroll table th{position:sticky;top:0}
   .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  /* 本页阅读统计（Vercount，兼容不蒜子标签 id） */
+  .bsz-line{
+    display:flex;flex-wrap:wrap;justify-content:center;gap:4px 20px;
+    margin:26px 0 0;padding-top:16px;
+    border-top:1px dashed var(--line,#26344a);
+    font-size:12px;color:var(--muted,#8fa1bb);
+  }
+  .bsz-line b{
+    font-size:14px;font-weight:700;color:var(--ink,#e6edf7);
+    font-variant-numeric:tabular-nums;margin:0 2px;
+  }
 </style>
 </head>
 <body>
@@ -141,6 +157,11 @@
     ④ 实际去除 = min(B, 杂质 − V×(10000−C)/10000)，扣除的杂质等量转成水。<br>
     ⑤ 纯度按整数万分比计算，与游戏一致。<br><br>
     <b>假设</b>：所有杂质都可被净化（游戏里水以外默认都可以）。如果是**滤芯**而不是净水器，结果完全不同——滤芯按孔径挑着拦，请用水质扫描仪实测。
+  </div>
+
+  <div class="bsz-line" aria-label="本页阅读统计">
+    <span>本页阅读量 <b id="busuanzi_value_page_pv">—</b> 次</span>
+    <span>本页访客数 <b id="busuanzi_value_page_uv">—</b> 人</span>
   </div>
 </div>
 
@@ -293,5 +314,7 @@ function recalc(){
 document.querySelectorAll("input").forEach(el => el.addEventListener("input", recalc));
 recalc();
 </script>
+
+<script defer src="https://events.vercount.one/js"></script>
 </body>
 </html>

@@ -36,6 +36,18 @@
   td.num{font-variant-numeric:tabular-nums;text-align:right}
   .note{font-size:12px;color:var(--muted);line-height:1.85}
   code{background:#0b1424;padding:1px 5px;border-radius:4px;font-size:12px;color:#a5f3fc}
+
+  /* 本页阅读统计（Vercount，兼容不蒜子标签 id） */
+  .bsz-line{
+    display:flex;flex-wrap:wrap;justify-content:center;gap:4px 20px;
+    margin:26px 0 0;padding-top:16px;
+    border-top:1px dashed var(--line,#26344a);
+    font-size:12px;color:var(--muted,#8fa1bb);
+  }
+  .bsz-line b{
+    font-size:14px;font-weight:700;color:var(--ink,#e6edf7);
+    font-variant-numeric:tabular-nums;margin:0 2px;
+  }
 </style>
 </head>
 <body>
@@ -94,6 +106,11 @@
     · 排污：<code>waste = 鱼重 ÷ 100 × 0.5 mL</code>，优先把纯水转成有机废物（内部按 µL 整数算）。<br>
     · 矿化：<code>有机废物 + 酸/碱 → 矿物</code>，每 10 µL 有机废物生成 1 µL 矿物，每 40 µL 消耗 1 µL 酸（酸不够再耗碱）。<br>
     · 吸收：<code>B = 鱼重 ÷ 100 × 0.5 mL</code>，重金属 / 化学 / 物理各一次，受底线 <code>纯水 × 指数 ÷ 10000</code> 限制（25 / 16 / 7）；纯水为 0 时不工作。
+  </div>
+
+  <div class="bsz-line" aria-label="本页阅读统计">
+    <span>本页阅读量 <b id="busuanzi_value_page_pv">—</b> 次</span>
+    <span>本页访客数 <b id="busuanzi_value_page_uv">—</b> 人</span>
   </div>
 </div>
 
@@ -219,5 +236,7 @@ function calc(){
 document.querySelectorAll("input,select").forEach(el => el.addEventListener("input", calc));
 calc();
 </script>
+
+<script defer src="https://events.vercount.one/js"></script>
 </body>
 </html>
