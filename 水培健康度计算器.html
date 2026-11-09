@@ -149,6 +149,21 @@
   .input-shell.no-suffix input{padding-right:11px}
   .input-shell input:hover{border-color:#334763}
   .input-shell input:focus{border-color:rgba(45,212,191,.8);box-shadow:0 0 0 3px rgba(45,212,191,.13);background:#0b1728}
+  .input-shell select{
+    width:100%;
+    padding:9px 10px;
+    font-size:13px;line-height:1.35;
+    color:var(--ink);
+    background:#0a1424;
+    border:1px solid var(--line);
+    border-radius:9px;
+    outline:none;
+    font-family:inherit;
+    transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
+  }
+  .input-shell select:hover{border-color:#334763}
+  .input-shell select:focus{border-color:rgba(45,212,191,.8);box-shadow:0 0 0 3px rgba(45,212,191,.13);background:#0b1728}
+  .input-shell[hidden]{display:none}
   .input-shell .suffix{
     position:absolute;right:10px;top:50%;transform:translateY(-50%);
     color:var(--muted-2);font-size:10.5px;pointer-events:none;font-weight:600;
@@ -532,6 +547,23 @@
           </div>
         </div>
 
+        <div class="crop-row">
+          <div class="crop-copy">
+            <span class="crop-label">作物预设</span>
+            <span class="crop-formula">选作物自动填入敏感度、养分区间、矿物质消耗、耗水量与污染系数</span>
+          </div>
+          <select id="cropPreset" class="crop-select" aria-label="选择作物预设">
+            <option value="nutrient" selected>营养果</option>
+            <option value="cotton">韧棉</option>
+            <option value="mushroom">梦帽菇</option>
+            <option value="reed">水培芦苇</option>
+            <option value="filler">填料草</option>
+            <option value="coffee">咖啡豆</option>
+            <option value="berry">荧光莓</option>
+            <option value="custom">自定义参数</option>
+          </select>
+        </div>
+
         <div class="field-grid">
           <div class="field">
             <label for="water">当前纯水量 <span class="tag">分母</span></label>
@@ -544,9 +576,21 @@
           <div class="field">
             <label for="sensitivity">植物污染敏感度</label>
             <div class="input-shell no-suffix">
-              <input id="sensitivity" type="number" min="0" step="0.01" value="1" inputmode="decimal">
+              <select id="sensitivity" aria-label="选择植物污染敏感度">
+                <option value="nutrient" selected>营养果 ×1.0</option>
+                <option value="cotton">韧棉 ×1.5</option>
+                <option value="mushroom">梦帽菇 ×1</option>
+                <option value="reed">水培芦苇 ×0</option>
+                <option value="filler">填料草 ×0.32</option>
+                <option value="coffee">咖啡豆 ×1</option>
+                <option value="berry">荧光莓 ×1</option>
+                <option value="custom">自定义基因编辑…</option>
+              </select>
             </div>
-            <div class="hint">指数乘此值后取整</div>
+            <div class="input-shell no-suffix" id="sensCustomWrap" hidden>
+              <input id="sensCustom" type="number" min="0" step="0.01" value="1" inputmode="decimal" aria-label="自定义污染敏感度">
+            </div>
+            <div class="hint">指数乘对应敏感度后取整</div>
           </div>
           <div class="field">
             <label for="growth">今晚生长进度 <span class="tag">点</span></label>
@@ -554,7 +598,7 @@
               <input id="growth" type="number" min="0" max="200" step="1" value="8" inputmode="numeric">
               <span class="suffix">点</span>
             </div>
-            <div class="hint">普通水培系统通常为 8</div>
+            <div class="hint" id="growthHint">今晚进度另填，非作物总量</div>
           </div>
           <div class="field">
             <label for="health">初始健康</label>
@@ -595,13 +639,13 @@
             <span class="crop-formula">六类表内损失合计 × 系数 = 实际每点 <b id="effectivePerPoint">0.00</b> 健康</span>
           </div>
           <select id="crop" class="crop-select" aria-label="选择作物污染系数">
-            <option value="1" selected>营养果 ×1.00</option>
-            <option value="1.26">韧棉 ×1.26</option>
-            <option value="1.01">梦帽菇 ×1.01</option>
-            <option value="1.01">咖啡豆 ×1.01</option>
-            <option value="1.25">荧光莓 ×1.25</option>
-            <option value="0">填料草 ×0（不受污染影响）</option>
-            <option value="0">水培芦苇 ×0（不受污染影响）</option>
+            <option value="nutrient" selected>营养果 ×1.00</option>
+            <option value="cotton">韧棉 ×1.26</option>
+            <option value="mushroom">梦帽菇 ×1.01</option>
+            <option value="coffee">咖啡豆 ×1.01</option>
+            <option value="berry">荧光莓 ×1.25</option>
+            <option value="filler">填料草 ×0（不受污染影响）</option>
+            <option value="reed">水培芦苇 ×0（不受污染影响）</option>
           </select>
         </div>
 
@@ -1199,10 +1243,8 @@
     const consumeUl = toUl(consumeMl);
     const waterUseMl = toNumber("waterUse", 0);
     const waterUseUl = toUl(waterUseMl);
-    const sensitivityRaw = Number($("sensitivity").value);
-    const sensitivity = Number.isFinite(sensitivityRaw) ? Math.max(0, sensitivityRaw) : 0;
-    const cropRaw = Number($("crop").value);
-    const cropCoeff = Number.isFinite(cropRaw) ? Math.max(0, cropRaw) : 0;
+    const sensitivity = readSensitivity();
+    const cropCoeff = CROP_COEFFS[$("crop").value] ?? 0;
 
     const pollutants = {};
     POLLUTANTS.forEach((p) => {
@@ -1241,6 +1283,7 @@
       water,
       waterUl,
       sensitivity,
+      sensitivityLabel: sensitivityLabel(),
       cropCoeff,
       growth,
       healthPct,
@@ -1772,7 +1815,103 @@
       "耗水后各污染物：" + result.water.pollutantParts.map((part) =>
         part.name + " " + fmtMl(part.afterUl, 3) + " mL"
       ).join("，") + "\n" +
-      "参数：纯水 " + state.water + " mL，每晚水耗 " + state.waterUseMl + " mL，敏感度 " + state.sensitivity + "，区间 " + state.lowerPct.toFixed(2) + "%–" + state.upperPct.toFixed(2) + "%";
+      "参数：纯水 " + state.water + " mL，每晚水耗 " + state.waterUseMl + " mL，敏感度 " + state.sensitivity + "（" + state.sensitivityLabel + "），区间 " + state.lowerPct.toFixed(2) + "%–" + state.upperPct.toFixed(2) + "%";
+  }
+
+  /* 植物污染敏感度：预设作物 + 自定义基因编辑 */
+  const SENSITIVITY_PRESETS = {
+    nutrient: { label: "营养果",   value: 1 },
+    cotton:   { label: "韧棉",     value: 1.5 },
+    mushroom: { label: "梦帽菇",   value: 1 },
+    reed:     { label: "水培芦苇", value: 0 },
+    filler:   { label: "填草料",   value: 0.32 },
+    coffee:   { label: "咖啡豆",   value: 1 },
+    berry:    { label: "荧光莓",   value: 1 }
+  };
+
+  function isCustomSensitivity() {
+    return $("sensitivity").value === "custom";
+  }
+
+  function readSensitivity() {
+    if (isCustomSensitivity()) {
+      const raw = Number($("sensCustom").value);
+      return Number.isFinite(raw) ? Math.max(0, raw) : 0;
+    }
+    const preset = SENSITIVITY_PRESETS[$("sensitivity").value];
+    return preset ? preset.value : 1;
+  }
+
+  function sensitivityLabel() {
+    if (isCustomSensitivity()) return "自定义基因编辑";
+    const preset = SENSITIVITY_PRESETS[$("sensitivity").value];
+    return preset ? preset.label + " ×" + preset.value : "—";
+  }
+
+  function syncSensitivityCustom() {
+    $("sensCustomWrap").hidden = !isCustomSensitivity();
+  }
+
+  function setSensitivity(value) {
+    const target = Math.max(0, Number(value) || 0);
+    const key = Object.keys(SENSITIVITY_PRESETS).find((k) => SENSITIVITY_PRESETS[k].value === target);
+    if (key) {
+      $("sensitivity").value = key;
+    } else {
+      $("sensitivity").value = "custom";
+      $("sensCustom").value = target;
+    }
+    syncSensitivityCustom();
+  }
+
+  /* 作物预设：选中一种作物，把它的环境参数一次性写进表单。
+     needGrowth 是该作物长成的总生长点数，不等于「今晚生长进度」，只作提示。 */
+  const CROP_PRESETS = {
+    nutrient: { label: "营养果",   needGrowth: 16, lower: 0.5,  upper: 2.5,  consume: 0.05,  waterUse: 100 },
+    cotton:   { label: "韧棉",     needGrowth: 43, lower: 2,    upper: 5,    consume: 0.075, waterUse: 250 },
+    mushroom: { label: "梦帽菇",   needGrowth: 28, lower: 1.75, upper: 3.25, consume: 0.03,  waterUse: 100 },
+    reed:     { label: "水培芦苇", needGrowth: 18, lower: 0,    upper: 2,    consume: 0.025, waterUse: 20 },
+    filler:   { label: "填料草",   needGrowth: 8,  lower: 0,    upper: 2,    consume: 0.075, waterUse: 451 },
+    coffee:   { label: "咖啡豆",   needGrowth: 21, lower: 1.75, upper: 3.25, consume: 0.03,  waterUse: 100 },
+    berry:    { label: "荧光莓",   needGrowth: 22, lower: 1.25, upper: 2.75, consume: 0.05,  waterUse: 100 }
+  };
+
+  /* 作物污染系数：沿用原下拉里的数值 */
+  const CROP_COEFFS = {
+    nutrient: 1,
+    cotton: 1.26,
+    mushroom: 1.01,
+    coffee: 1.01,
+    berry: 1.25,
+    filler: 0,
+    reed: 0
+  };
+
+  function setGrowthHint(text) {
+    const hint = $("growthHint");
+    if (hint) hint.textContent = text;
+  }
+
+  function applyCropPreset(key) {
+    const preset = CROP_PRESETS[key];
+    if (!preset) return;
+    $("sensitivity").value = key;
+    syncSensitivityCustom();
+    setValue("lower", preset.lower);
+    setValue("upper", preset.upper);
+    setValue("consume", preset.consume);
+    setValue("waterUse", preset.waterUse);
+    setValue("crop", key);
+    setGrowthHint("总需生长 " + preset.needGrowth + " 点（今晚另填）");
+    recalc();
+  }
+
+  function markCropPresetCustom() {
+    const sel = $("cropPreset");
+    if (sel && sel.value !== "custom") {
+      sel.value = "custom";
+      setGrowthHint("今晚进度另填，非作物总量");
+    }
   }
 
   function setValue(id, value) {
@@ -1782,8 +1921,9 @@
   function resetToDefaults() {
     setValue("water", DEFAULTS.water);
     setValue("waterUse", DEFAULTS.waterUse);
-    setValue("sensitivity", DEFAULTS.sensitivity);
-    setValue("crop", 1);
+    setSensitivity(DEFAULTS.sensitivity);
+    setValue("cropPreset", "nutrient");
+    setValue("crop", "nutrient");
     setValue("growth", DEFAULTS.growth);
     setValue("health", DEFAULTS.health);
     setValue("mineral", DEFAULTS.mineral);
@@ -1799,8 +1939,9 @@
   function loadDemo() {
     setValue("water", DEMO.water);
     setValue("waterUse", DEMO.waterUse);
-    setValue("sensitivity", DEMO.sensitivity);
-    setValue("crop", 1);
+    setSensitivity(DEMO.sensitivity);
+    setValue("cropPreset", "custom");
+    setValue("crop", "nutrient");
     setValue("growth", DEMO.growth);
     setValue("health", DEMO.health);
     setValue("mineral", DEMO.mineral);
@@ -1853,7 +1994,27 @@
     document.querySelectorAll("input").forEach((input) => {
       input.addEventListener("input", recalc);
     });
-    $("crop").addEventListener("change", recalc);
+    $("crop").addEventListener("change", () => {
+      markCropPresetCustom();
+      recalc();
+    });
+    $("sensitivity").addEventListener("change", () => {
+      syncSensitivityCustom();
+      markCropPresetCustom();
+      recalc();
+    });
+    $("cropPreset").addEventListener("change", () => {
+      if ($("cropPreset").value === "custom") {
+        recalc();
+        return;
+      }
+      applyCropPreset($("cropPreset").value);
+    });
+    ["lower", "upper", "waterUse"].forEach((id) => {
+      $(id).addEventListener("input", markCropPresetCustom);
+    });
+    syncSensitivityCustom();
+    applyCropPreset("nutrient");
     $("btnReset").addEventListener("click", resetToDefaults);
     $("btnDemo").addEventListener("click", loadDemo);
     $("btnCopy").addEventListener("click", copySummary);
