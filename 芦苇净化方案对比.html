@@ -16,7 +16,7 @@
   h1{font-size:23px;margin:0 0 6px;color:#f8fafc}
   .sub{color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.75}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
-  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
   @media(max-width:820px){.grid{grid-template-columns:1fr 1fr}}
   label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
   input[type=number]{width:100%;padding:7px 9px;font-size:14px;border:1px solid var(--line);
@@ -26,8 +26,17 @@
   table{width:100%;border-collapse:collapse;font-size:13px}
   th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
   th{background:#0a1220;color:#cbd5e1;font-size:12px;font-weight:600}
+  th.num{text-align:right;font-variant-numeric:tabular-nums}
   tr:nth-child(even) td{background:#16213a}
+  #tbl tbody tr{cursor:pointer}
+  #tbl tbody tr:hover td{background:#1c2b46}
+  #tbl tbody tr.sel td{background:rgba(45,212,191,.10) !important}
   td.num{font-variant-numeric:tabular-nums;text-align:right}
+  .op-uv{color:#60a5fa;font-weight:600}
+  .op-tablet{color:#fbbf24;font-weight:600}
+  .op-reed{color:#34d399;font-weight:600}
+  .op-filter{color:#c084fc;font-weight:600}
+  #tblDays tbody tr.init td{background:rgba(96,165,250,.08);color:#dbeafe}
   .best td{background:#0f2f26 !important;color:#a7f3d0}
   .bad{color:#f87171}
   .scroll{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#0e1728}
@@ -80,7 +89,7 @@
       <div>
         <label>药片数量（片）</label>
         <input id="tab" type="number" value="2" min="0" max="60" step="1">
-        <div class="hint">默认按“清到 0.7% 底”自动计算，可手改</div>
+        <div class="hint">自动按「清完化学 + 微生物」给出片数上限，可手改；各方案会在上限内取最少片数</div>
       </div>
       <div>
         <label>水量（毫升）</label>
@@ -97,7 +106,7 @@
       <button id="btnB" style="padding:6px 12px;font-size:13px;border-radius:8px;border:1px solid #26344a;background:#16213a;color:#e6edf7;cursor:pointer">纯水 99.90%</button>
     </div>
     <div class="hint" style="margin-top:10px">
-      成分按实测瓶比例拆分：化学 35.3%、有机 23.5%、微生物 17.6%、重金属 11.8%、物理 11.8%；矿物固定 1.39%。
+      成分按实测瓶比例拆分：非水部分里矿物固定 15%，其余 85% 按 化学 35.3%、有机 23.5%、微生物 17.6%、重金属 11.8%、物理 11.8% 分摊。
     </div>
   </div>
 
@@ -105,17 +114,17 @@
     <h2>方案对比<span class="tag">按天数升序</span></h2>
     <div class="scroll">
       <table id="tbl">
-        <thead><tr><th>方案</th><th>每日操作</th><th class="num">天数</th><th class="num">到达纯度</th><th class="num">理论上限</th><th class="num">耗材</th><th>说明</th></tr></thead>
+        <thead><tr><th>方案</th><th>整体操作</th><th class="num">天数</th><th class="num">到达纯度</th><th class="num">理论上限</th><th class="num">耗材</th><th>说明</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
   </div>
 
   <div class="card">
-    <h2>最优方案逐日</h2>
+    <h2>每日推演<span class="tag" id="daysFor">点击上方任意方案查看</span></h2>
     <div class="scroll" style="max-height:300px">
       <table id="tblDays">
-        <thead><tr><th>天</th><th class="num">水占比</th><th class="num">化学</th><th class="num">重金属</th><th class="num">有机</th></tr></thead>
+        <thead><tr><th>天</th><th class="num">水</th><th class="num">化学</th><th class="num">重金属</th><th class="num">有机</th><th class="num">微生物</th><th class="num">物理</th><th class="num">矿物</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -126,8 +135,8 @@
     · 芦苇净化：每类扣 28.2843%，目标 <code>max(1 mL, round(量×比例))</code>，残留底线 <code>纯水×⌊基准指数÷4⌋÷10000</code>；每周期先抽走 20 mL。<br>
     · 过滤器：物理/有机/矿物留 0.16%；每点耐久清除量——有机 1 mL、物理 1.5 mL（耗 2 点）、矿物 2 mL；微生物不拦。<br>
     · UV：微生物全部转成水。<br>
-    · 药片：每片 15 mL 氯，清除化学 = min(超出 0.7% 底线的部分, 76.5 mL)。<br>
-    · 预处理只算第一次（过滤/药片重复做没有额外收益）；芦苇每天都做。<br>
+    · 药片：每片额度 76.5 mL——先清化学污染物里高于「反应前总量 × 0.7%」的部分，剩余额度再清微生物（两者共用同一份额度）；化学低于残留线时保持原量，不会补到残留线。<br>
+    · 按方案顺序执行：芦苇之前的项瞬间完成；排在芦苇之后的过滤/药片，要等芦苇跑到「用上它就能达标」的那天才执行，天数取最短；达到目标立即停止；排序先比天数、再比耗材。<br>
     · 基准指数：重金属 25、化学 16、有机 10、微生物 9、物理 7、矿物 7（矿物不净化）。<br>
     · 价格：药片 6 元/片，滤芯 25 元/个（400 耐久）；滤芯按耐久折算成小数计费。
   </div>
@@ -143,7 +152,7 @@ const RATIO = { "化学污染物":0.353, "有机废物":0.235, "微生物":0.176
 const BASE = { "化学污染物":16, "有机废物":10, "微生物":9, "重金属":25, "物理污染物":7, "矿物质":7 };
 const PS = { "化学污染物":2, "有机废物":40, "微生物":50, "重金属":12, "物理污染物":100, "矿物质":30 };
 const SHARE = Math.min(0.95, 0.1 * Math.pow(4, 0.75));
-const MINERAL_SHARE = 0.0139;
+const MINERAL_OF_IMPURITY = 0.15;   // 矿物固定占非水部分 15%
 const TABLET_ML = 76.5;          // 每片清除量
 const TABLET_FLOOR = 0.007;      // 0.7% 残留底
 const FILTER_DURABILITY = 400;   // 一个滤芯 400 点
@@ -156,8 +165,10 @@ const FILTER = {   // 每点耐久清多少 µL，以及每步消耗几点耐久
 
 function build(purity, volML){
   const water = volML * purity / 100;
-  const mineral = volML * MINERAL_SHARE;
-  const imp = Math.max(0, volML - water - mineral);
+  const nonWater = Math.max(0, volML - water);
+  // 矿物固定占非水部分的 15%，其余 85% 再按 RATIO 拆成五类污染物
+  const mineral = nonWater * MINERAL_OF_IMPURITY;
+  const imp = nonWater - mineral;
   const c = { "矿物质": mineral };
   for (const k in RATIO) c[k] = imp * RATIO[k];
   return { water, c };
@@ -179,10 +190,24 @@ function filter(s){
   }
 }
 function tablet(s){
-  const t = total(s), chem = s.c["化学污染物"];
-  const floor = t * TABLET_FLOOR;
-  const can = Math.max(0, chem - floor);
-  s.c["化学污染物"] = chem - Math.min(can, TABLET_ML);
+  const t0 = total(s);                     // 反应前合计体积
+  const floor = t0 * TABLET_FLOOR;         // 0.7% 残留线
+  const chem = s.c["化学污染物"];
+  let cap = TABLET_ML;                     // 每片额度
+  // 先清化学里高于残留线的部分；低于残留线则保持原量，不补足
+  const over = Math.max(0, chem - floor);
+  const takeChem = Math.min(over, cap);
+  s.c["化学污染物"] = chem - takeChem;
+  cap -= takeChem;
+  // 剩余额度再清微生物，两类共用同一份额度
+  if (cap > 0){
+    const micro = s.c["微生物"];
+    if (micro > 0){
+      const takeMicro = Math.min(micro, cap);
+      s.c["微生物"] = micro - takeMicro;
+      cap -= takeMicro;
+    }
+  }
 }
 function reed(s){
   const t0 = total(s);
@@ -207,45 +232,98 @@ function reed(s){
   s.water += removed;
 }
 
-function applyOps(seq, s, tablets){
-  for (const op of seq){
-    if (op === "uv") uv(s);
-    else if (op === "filter") filter(s);
-    else if (op === "tablet"){ for (let i = 0; i < tablets; i++) tablet(s); }
-    else if (op === "reed") reed(s);
+function tabletsNeeded(s){
+  const t = total(s);
+  const floor = t * TABLET_FLOOR;
+  const excess = Math.max(0, s.c["化学污染物"] - floor);
+  return Math.ceil(excess / TABLET_ML);
+}
+
+function applyTablets(s, cap){
+  // 只要还有可清的东西（化学高于残留线，或微生物 > 0）就继续用，最多 cap 片
+  let used = 0;
+  while (used < cap){
+    const floor = total(s) * TABLET_FLOOR;
+    const over = Math.max(0, s.c["化学污染物"] - floor);
+    if (over <= 0 && s.c["微生物"] <= 0) break;
+    tablet(s);
+    used++;
   }
+  s.tabletCount = (s.tabletCount || 0) + used;
+}
+
+// 试算用：只把后续的消耗品（药片/过滤）套上去，不含芦苇
+
+// 瞬间完成的步骤（紫外线/过滤/药片）
+function applyInstantOp(s, op, cap){
+  if (op === "uv") uv(s);
+  else if (op === "filter") filter(s);
+  else if (op === "tablet") applyTablets(s, cap);
 }
 
 const SCHEMES = [
   { name: "U F T R", seq: ["uv","filter","tablet","reed"], note: "紫外线 → 过滤 → 药片 → 芦苇" },
   { name: "U T R F", seq: ["uv","tablet","reed","filter"], note: "紫外线 → 药片 → 芦苇 → 过滤" },
   { name: "U F R T", seq: ["uv","filter","reed","tablet"], note: "紫外线 → 过滤 → 芦苇 → 药片" },
+  { name: "R", seq: ["reed"], note: "只用芦苇" },
   { name: "R F", seq: ["reed","filter"], note: "芦苇 → 过滤（不用 UV / 药片）" },
+  { name: "R F T", seq: ["reed","filter","tablet"], note: "芦苇 → 过滤 → 药片（不用 UV）" },
   { name: "U R F", seq: ["uv","reed","filter"], note: "紫外线 → 芦苇 → 过滤" },
-  { name: "R U F T", seq: ["reed","uv","filter","tablet"], note: "芦苇 → 紫外线 → 过滤 → 药片" }
+  { name: "U R F T", seq: ["uv","reed","filter","tablet"], note: "紫外线 → 芦苇 → 过滤 → 药片" },
+  { name: "R U F T", seq: ["reed","uv","filter","tablet"], note: "芦苇 → 紫外线 → 过滤 → 药片" },
+  { name: "F T R", seq: ["filter","tablet","reed"], note: "过滤 → 药片 → 芦苇（不用 UV）" }
 ];
 
 function simulate(seq, target, s0, tablets){
-  const s = { water: s0.water, c: { ...s0.c }, filterCost: 0 };
-  applyOps(seq, s, tablets);
-  let p = purity(s);
-  const rows = [{ day: 1, p, s: { ...s.c } }];
-  if (p >= target) return { days: 1, p, rows, filterCost: s.filterCost };
-  let prev = p;
-  for (let d = 2; d <= 60; d++){
+  const s = { water: s0.water, c: { ...s0.c }, filterCost: 0, tabletCount: 0 };
+  const rows = [];
+  const reedIdx = seq.indexOf("reed");
+  const pre = reedIdx >= 0 ? seq.slice(0, reedIdx) : seq;
+  const post = reedIdx >= 0 ? seq.slice(reedIdx + 1) : [];
+  const push = (d) => { const p = purity(s); rows.push({ day: d, p, s: { ...s.c }, t: total(s) }); return p; };
+  const startP = purity(s);
+  const startC = { ...s.c };
+  const startT = total(s);
+  const result = (days) => ({ days, p: purity(s), rows, startP, startC, startT, filterCost: s.filterCost, tabletCount: s.tabletCount });
+
+  // 芦苇之前的步骤：瞬间完成
+  for (const op of pre){
+    applyInstantOp(s, op, tablets);
+    if (purity(s) >= target) return result(1);
+  }
+  if (reedIdx < 0) return result(1);
+
+  // 芦苇阶段：每天一轮。排在芦苇之后的步骤，要等芦苇跑到“用上它就能达标”的那天才执行（天数取最短）
+  let prev = purity(s);
+  for (let d = 1; d <= 60; d++){
     reed(s);
-    p = purity(s);
-    rows.push({ day: d, p, s: { ...s.c } });
-    if (p >= target) return { days: d, p, rows, filterCost: s.filterCost };
-    if (p === prev) break;
+    const trial = { water: s.water, c: { ...s.c }, filterCost: 0, tabletCount: 0 };
+    for (const op of post) applyInstantOp(trial, op, tablets);
+    if (purity(trial) >= target){
+      for (const op of post) applyInstantOp(s, op, tablets);
+      push(d);
+      return result(d);
+    }
+    const p = push(d);
+    if (p >= target) return result(d);
+    if (p <= prev){
+      // 芦苇已经降不动了，把后续步骤做完收尾
+      for (const op of post) applyInstantOp(s, op, tablets);
+      const p2 = purity(s);
+      if (p2 !== p) push(d);
+      return result(p2 >= target ? d : null);
+    }
     prev = p;
   }
-  return { days: null, p, rows, filterCost: s.filterCost };
+  return result(null);
 }
 
 function capOf(seq, s0, tablets){
-  const s = { water: s0.water, c: { ...s0.c }, filterCost: 0 };
-  applyOps(seq, s, tablets);
+  const s = { water: s0.water, c: { ...s0.c }, filterCost: 0, tabletCount: 0 };
+  const reedIdx = seq.indexOf("reed");
+  const pre = reedIdx >= 0 ? seq.slice(0, reedIdx) : seq;
+  const post = reedIdx >= 0 ? seq.slice(reedIdx + 1) : [];
+  for (const op of pre) applyInstantOp(s, op, tablets);
   let last = -1;
   for (let i = 0; i < 120; i++){
     reed(s);
@@ -253,18 +331,34 @@ function capOf(seq, s0, tablets){
     if (Math.abs(p - last) < 0.005) break;
     last = p;
   }
+  for (const op of post) applyInstantOp(s, op, tablets);
   return purity(s);
 }
 
 function autoTablets(purityIn, vol){
-  const imp = Math.max(0, 100 - purityIn - MINERAL_SHARE * 100);
+  const imp = Math.max(0, 100 - purityIn) * (1 - MINERAL_OF_IMPURITY);
   const chem = vol * (imp / 100) * RATIO["化学污染物"];
+  const micro = vol * (imp / 100) * RATIO["微生物"];
   const floor = vol * TABLET_FLOOR;
-  return Math.max(0, Math.ceil((chem - floor) / TABLET_ML));
+  // 一片 76.5 mL 额度：先把化学清到残留线，剩余清微生物，所以按两者合计给默认片数
+  const need = Math.max(0, chem - floor) + micro;
+  return Math.max(0, Math.ceil(need / TABLET_ML));
 }
 
 let tabManual = false;
 document.getElementById("tab").addEventListener("input", () => { tabManual = true; });
+
+// 自动模式：在“上限”之内，取仍能达到该方案最快天数的最少片数。
+// 手动模式：按输入值当上限，单片用量仍受 0.7% 底线约束。
+function pickTablets(seq, target, s0, cap){
+  const full = simulate(seq, target, s0, cap);
+  if (tabManual || full.days === null) return full;
+  for (let k = 0; k < cap; k++){
+    const r = simulate(seq, target, s0, k);
+    if (r.days === full.days) return r;
+  }
+  return full;
+}
 
 function recalc(){
   const purityIn = Number(document.getElementById("p").value) || 0;
@@ -278,28 +372,40 @@ function recalc(){
 
   const s0 = build(purityIn, vol);
   const results = SCHEMES.map(sc => {
-    const r = simulate(sc.seq, target, s0, tablets);
+    const r = pickTablets(sc.seq, target, s0, tablets);
     return { ...sc, ...r, cap: capOf(sc.seq, s0, tablets) };
   });
+  // 自动模式下，把输入框回填成“各方案实际需要的最多片数”，避免显示比实际用量多
+  if (!tabManual){
+    const maxUsed = results.reduce((m, r) => Math.max(m, r.tabletCount || 0), 0);
+    if (maxUsed !== tablets) document.getElementById("tab").value = maxUsed;
+  }
+  const costOf = (r) => (r.tabletCount || 0) * 6 + ((r.filterCost || 0) / FILTER_DURABILITY) * 25;
   results.sort((a,b) => {
-    if (a.days === null && b.days === null) return b.cap - a.cap;
+    if (a.days === null && b.days === null) return costOf(a) - costOf(b);
     if (a.days === null) return 1;
     if (b.days === null) return -1;
-    return a.days - b.days;
+    if (a.days !== b.days) return a.days - b.days;
+    return costOf(a) - costOf(b);
   });
 
   const tb = document.querySelector("#tbl tbody");
   tb.innerHTML = "";
   results.forEach((r, i) => {
-    const tabCount = r.seq.indexOf("tablet") >= 0 ? tablets : 0;
-    const filtCount = r.filterCost ? Math.ceil(r.filterCost / FILTER_DURABILITY) : 0;
-    const filtUsed = r.filterCost ? r.filterCost / FILTER_DURABILITY : 0;
+    const tabCount = r.tabletCount || 0;
+    const usesFilter = r.seq.indexOf("filter") >= 0;
+    const filtUsed = usesFilter && r.filterCost ? r.filterCost / FILTER_DURABILITY : 0;
     const money = "¥" + (tabCount * 6 + filtUsed * 25).toFixed(1) +
       "（滤芯" + filtUsed.toFixed(1) + " + 药片" + tabCount + "）";
     const tr = document.createElement("tr");
     if (i === 0 && r.days !== null) tr.className = "best";
     const CN = { uv:"紫外线", filter:"过滤", reed:"芦苇" };
-    const ops = r.seq.map(op => op === "tablet" ? "药片×" + tablets : (CN[op] || op)).join(" → ");
+    const ops = r.seq.map(op => {
+      if (op === "tablet") return "<span class='op-tablet'>药片×" + (r.tabletCount || 0) + "</span>";
+      if (op === "filter") return "<span class='op-filter'>过滤</span>";
+      if (op === "uv") return "<span class='op-uv'>紫外线</span>";
+      return "<span class='op-reed'>芦苇</span>";
+    }).join(" → ");
     tr.innerHTML =
       "<td>" + r.name + "</td>" +
       "<td>" + ops + "</td>" +
@@ -309,20 +415,62 @@ function recalc(){
       "<td class='num'>" + money + "</td>" +
       "<td>" + r.note + "</td>";
     tb.appendChild(tr);
+    tr.addEventListener("click", () => selectScheme(i));
   });
 
-  const best = results.find(r => r.days !== null) || results[0];
+  lastResults = results;
+  selectScheme(0);
+}
+
+let lastResults = [];
+let selIdx = 0;
+
+function renderDays(idx){
+  const r = lastResults[idx];
   const db = document.querySelector("#tblDays tbody");
   db.innerHTML = "";
-  best.rows.slice(0, 40).forEach(row => {
+  if (!r) return;
+  const mkShare = (c, t) => (k) => t > 0 ? (c[k] / t * 100).toFixed(2) + "%" : "—";
+  // 第 0 行：初始浓度（还没做任何处理）
+  {
+    const s0share = mkShare(r.startC || {}, r.startT || 0);
     const tr = document.createElement("tr");
+    tr.className = "init";
     tr.innerHTML =
-      "<td class='num'>" + row.day + "</td>" +
-      "<td class='num'>" + row.p.toFixed(2) + "%</td>" +
-      "<td class='num'>" + (row.s["化学污染物"]/1000).toFixed(2) + " mL</td>" +
-      "<td class='num'>" + (row.s["重金属"]/1000).toFixed(2) + " mL</td>" +
-      "<td class='num'>" + (row.s["有机废物"]/1000).toFixed(2) + " mL</td>";
+      "<td>初始浓度</td>" +
+      "<td class='num'>" + (r.startP || 0).toFixed(2) + "%</td>" +
+      "<td class='num'>" + s0share("化学污染物") + "</td>" +
+      "<td class='num'>" + s0share("重金属") + "</td>" +
+      "<td class='num'>" + s0share("有机废物") + "</td>" +
+      "<td class='num'>" + s0share("微生物") + "</td>" +
+      "<td class='num'>" + s0share("物理污染物") + "</td>" +
+      "<td class='num'>" + s0share("矿物质") + "</td>";
     db.appendChild(tr);
+  }
+  (r.rows || []).slice(0, 40).forEach(row => {
+    const tr = document.createElement("tr");
+    const t = row.t || 0;
+    const share = (k) => t > 0 ? (row.s[k] / t * 100).toFixed(2) + "%" : "—";
+    tr.innerHTML =
+      "<td>" + row.day + "</td>" +
+      "<td class='num'>" + row.p.toFixed(2) + "%</td>" +
+      "<td class='num'>" + share("化学污染物") + "</td>" +
+      "<td class='num'>" + share("重金属") + "</td>" +
+      "<td class='num'>" + share("有机废物") + "</td>" +
+      "<td class='num'>" + share("微生物") + "</td>" +
+      "<td class='num'>" + share("物理污染物") + "</td>" +
+      "<td class='num'>" + share("矿物质") + "</td>";
+    db.appendChild(tr);
+  });
+  const tag = document.getElementById("daysFor");
+  if (tag) tag.textContent = r.name + "（" + (r.days === null ? "达不到" : r.days + " 天") + "）";
+}
+
+function selectScheme(idx){
+  selIdx = idx;
+  renderDays(idx);
+  document.querySelectorAll("#tbl tbody tr").forEach((tr, i) => {
+    tr.classList.toggle("sel", i === idx);
   });
 }
 
