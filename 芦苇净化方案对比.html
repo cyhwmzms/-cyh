@@ -88,12 +88,12 @@
       </div>
       <div>
         <label>药片数量（片）</label>
-        <input id="tab" type="number" value="2" min="0" max="60" step="1">
+        <input id="tab" type="number" value="2" min="0" max="200" step="1">
         <div class="hint">自动按「清完化学 + 微生物」给出片数上限，可手改；各方案会在上限内取最少片数</div>
       </div>
       <div>
         <label>水量（毫升）</label>
-        <input id="v" type="number" value="6000" min="100" step="100">
+        <input id="v" type="number" value="6000" min="100" max="1000000" step="100">
         <div class="hint">影响药片的绝对清除量</div>
       </div>
       <div>
@@ -153,6 +153,7 @@ const BASE = { "化学污染物":16, "有机废物":10, "微生物":9, "重金�
 const PS = { "化学污染物":2, "有机废物":40, "微生物":50, "重金属":12, "物理污染物":100, "矿物质":30 };
 const SHARE = Math.min(0.95, 0.1 * Math.pow(4, 0.75));
 const MINERAL_OF_IMPURITY = 0.15;   // 矿物固定占非水部分 15%
+const TABLET_MAX = 200;             // 药片数上限，防止水量填得过大时卡死
 const TABLET_ML = 76.5;          // 每片清除量
 const TABLET_FLOOR = 0.007;      // 0.7% 残留底
 const FILTER_DURABILITY = 400;   // 一个滤芯 400 点
@@ -242,7 +243,7 @@ function tabletsNeeded(s){
 function applyTablets(s, cap){
   // 只要还有可清的东西（化学高于残留线，或微生物 > 0）就继续用，最多 cap 片
   let used = 0;
-  while (used < cap){
+  while (used < cap && used < TABLET_MAX){
     const floor = total(s) * TABLET_FLOOR;
     const over = Math.max(0, s.c["化学污染物"] - floor);
     if (over <= 0 && s.c["微生物"] <= 0) break;
@@ -342,7 +343,7 @@ function autoTablets(purityIn, vol){
   const floor = vol * TABLET_FLOOR;
   // 一片 76.5 mL 额度：先把化学清到残留线，剩余清微生物，所以按两者合计给默认片数
   const need = Math.max(0, chem - floor) + micro;
-  return Math.max(0, Math.ceil(need / TABLET_ML));
+  return Math.min(TABLET_MAX, Math.max(0, Math.ceil(need / TABLET_ML)));
 }
 
 let tabManual = false;
@@ -352,7 +353,8 @@ document.getElementById("tab").addEventListener("input", () => { tabManual = tru
 // 手动模式：按输入值当上限，单片用量仍受 0.7% 底线约束。
 function pickTablets(seq, target, s0, cap){
   const full = simulate(seq, target, s0, cap);
-  if (tabManual || full.days === null) return full;
+  // 片数很大时跳过逐片试算（最多 60 次），避免每次输入都跑上千次模拟
+  if (tabManual || full.days === null || cap > 60) return full;
   for (let k = 0; k < cap; k++){
     const r = simulate(seq, target, s0, k);
     if (r.days === full.days) return r;
@@ -362,13 +364,13 @@ function pickTablets(seq, target, s0, cap){
 
 function recalc(){
   const purityIn = Number(document.getElementById("p").value) || 0;
-  const vol = Math.max(100, Number(document.getElementById("v").value) || 6000);
+  const vol = Math.max(100, Math.min(1000000, Number(document.getElementById("v").value) || 6000));
   const target = Number(document.getElementById("t").value) || 99;
 
   if (!tabManual){
     document.getElementById("tab").value = autoTablets(purityIn, vol);
   }
-  const tablets = Math.max(0, Math.floor(Number(document.getElementById("tab").value) || 0));
+  const tablets = Math.max(0, Math.min(TABLET_MAX, Math.floor(Number(document.getElementById("tab").value) || 0)));
 
   const s0 = build(purityIn, vol);
   const results = SCHEMES.map(sc => {
